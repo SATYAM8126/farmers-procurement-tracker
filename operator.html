@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procurement Operator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-strip"></div>
+
+<header class="gov-header">
+
+    <div class="gov-brand">
+        <div class="emblem">🇮🇳</div>
+
+        <div>
+            <div class="gov-title">Government of India</div>
+            <div class="gov-subtitle">Procurement Management Portal</div>
+        </div>
+    </div>
+
+    <a href="index.html" class="header-link">← Home</a>
+
+</header>
+
+<nav class="main-nav">
+
+    <div class="nav-inner">
+        <a href="index.html">Home</a>
+        <a href="operator.html" class="active">Operator Dashboard</a>
+        <a href="admin.html">Admin</a>
+    </div>
+
+</nav>
+
+<main class="dashboard">
+
+    <div class="page-title">
+
+        <div>
+            <span>Procurement Management</span>
+            <h1>Centre Operator Dashboard</h1>
+        </div>
+
+        <div class="centre-live">
+            ● Centre Online
+        </div>
+
+    </div>
+
+    <div class="operator-header">
+
+        <div>
+            <h2>Haridwar Procurement Centre</h2>
+            <p>Centre Code: HPC-001</p>
+        </div>
+
+        <div class="operator-date">
+            01 September 2026
+        </div>
+
+    </div>
+
+    <div class="token-section">
+
+        <div class="small-stat">
+            <span>Currently Processing</span>
+            <strong id="operatorCurrent">15</strong>
+            <small>Token number</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Waiting Farmers</span>
+            <strong id="operatorWaiting">12</strong>
+            <small>In queue</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Completed Today</span>
+            <strong id="operatorCompleted">14</strong>
+            <small>Farmers served</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Average Processing</span>
+            <strong>6 min</strong>
+            <small>Per farmer</small>
+        </div>
+
+    </div>
+
+    <div class="queue-panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <span>Queue Management</span>
+                <h2>Today's Farmer Queue</h2>
+            </div>
+
+            <button class="primary-btn small-btn" onclick="addFarmer()">
+                + Add Farmer
+            </button>
+
+        </div>
+
+        <div class="centre-table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Token</th>
+                        <th>Farmer</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="queueTable">
+
+                    <tr>
+                        <td><strong>#15</strong></td>
+                        <td>Raj Kumar</td>
+                        <td>35 Qtl</td>
+                        <td><span class="badge blue">Processing</span></td>
+                        <td>
+                            <button class="table-btn" onclick="completeToken(15)">
+                                Complete
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>#16</strong></td>
+                        <td>Mohan Singh</td>
+                        <td>28 Qtl</td>
+                        <td><span class="badge yellow">Waiting</span></td>
+                        <td>
+                            <button class="table-btn" onclick="processToken(16)">
+                                Process
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>#17</strong></td>
+                        <td>Suresh Kumar</td>
+                        <td>42 Qtl</td>
+                        <td><span class="badge yellow">Waiting</span></td>
+                        <td>
+                            <button class="table-btn" onclick="processToken(17)">
+                                Process
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>#18</strong></td>
+                        <td>Ravi Das</td>
+                        <td>31 Qtl</td>
+                        <td><span class="badge yellow">Waiting</span></td>
+                        <td>
+                            <button class="table-btn" onclick="processToken(18)">
+                                Process
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>#19</strong></td>
+                        <td>Anil Kumar</td>
+                        <td>25 Qtl</td>
+                        <td><span class="badge yellow">Waiting</span></td>
+                        <td>
+                            <button class="table-btn" onclick="processToken(19)">
+                                Process
+                            </button>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</main>
+
+<footer>
+
+    <div class="footer-bottom">
+        <p>© 2026 Farmer Procurement Status & Wait-Time Tracker | SIH Prototype</p>
+    </div>
+
+</footer>
+
+<script>
+
+let completed = 14;
+let waiting = 12;
+
+function completeToken(token) {
+
+    completed++;
+    waiting--;
+
+    document.getElementById("operatorCompleted").textContent = completed;
+    document.getElementById("operatorWaiting").textContent = waiting;
+
+    alert("Token #" + token + " has been marked as completed.");
+
+}
+
+function processToken(token) {
+
+    document.getElementById("operatorCurrent").textContent = token;
+
+    alert("Token #" + token + " is now being processed.");
+
+}
+
+function addFarmer() {
+
+    waiting++;
+
+    document.getElementById("operatorWaiting").textContent = waiting;
+
+    alert("New farmer added to the queue.");
+
+}
+
+</script>
+
+</body>
+</html>
