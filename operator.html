@@ -63,6 +63,20 @@
 
     </div>
 
+    <div class="operator-header" id="scheduleCard" style="margin-top: 16px;">
+
+        <div>
+            <h2>Procurement Schedule</h2>
+            <p id="scheduleCommodity">Loading...</p>
+        </div>
+
+        <div class="operator-date">
+            <div id="scheduleMsp"></div>
+            <div id="scheduleDates" style="margin-top: 4px; font-size: 13px; opacity: 0.8;"></div>
+        </div>
+
+    </div>
+
     <div class="token-section">
 
         <div class="small-stat">
@@ -198,6 +212,20 @@ function loadQueue() {
         .catch(err => console.error("Failed to load queue:", err));
 }
 
+function loadSchedule() {
+    fetch(`${API}/centres/${centreId}`)
+        .then(res => res.json())
+        .then(centre => {
+            document.getElementById("scheduleCommodity").textContent =
+                centre.currentCommodity ? `Currently procuring: ${centre.currentCommodity}` : "No active procurement set";
+            document.getElementById("scheduleMsp").textContent =
+                centre.mspRatePerQuintal ? `MSP: ₹${centre.mspRatePerQuintal}/quintal` : "";
+            document.getElementById("scheduleDates").textContent =
+                centre.scheduleInfo || "";
+        })
+        .catch(err => console.error("Failed to load schedule:", err));
+}
+
 function completeToken(tokenId) {
     fetch(`${API}/tokens/${tokenId}/complete`, { method: "PATCH" })
         .then(res => res.json())
@@ -229,6 +257,7 @@ function addFarmer() {
 
 // initial load
 loadQueue();
+loadSchedule();
 
 // live refresh via WebSocket whenever anything changes (even from another tab)
 const socket = new SockJS("http://localhost:8080/ws");
