@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procurement Operator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-strip"></div>
+
+<header class="gov-header">
+
+    <div class="gov-brand">
+        <div class="emblem">🇮🇳</div>
+
+        <div>
+            <div class="gov-title">Government of India</div>
+            <div class="gov-subtitle">Procurement Management Portal</div>
+        </div>
+    </div>
+
+    <a href="index.html" class="header-link">← Home</a>
+
+</header>
+
+<nav class="main-nav">
+
+    <div class="nav-inner">
+        <a href="index.html">Home</a>
+        <a href="operator.html" class="active">Operator Dashboard</a>
+        <a href="admin.html">Admin</a>
+    </div>
+
+</nav>
+
+<main class="dashboard">
+
+    <div class="page-title">
+
+        <div>
+            <span>Procurement Management</span>
+            <h1>Centre Operator Dashboard</h1>
+        </div>
+
+        <div class="centre-live">
+            ● Centre Online
+        </div>
+
+    </div>
+
+    <div class="operator-header">
+
+        <div>
+            <h2>Haridwar Procurement Centre</h2>
+            <p>Centre Code: HPC-001</p>
+        </div>
+
+        <div class="operator-date">
+            01 September 2026
+        </div>
+
+    </div>
+
+    <div class="token-section">
+
+        <div class="small-stat">
+            <span>Currently Processing</span>
+            <strong id="operatorCurrent">15</strong>
+            <small>Token number</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Waiting Farmers</span>
+            <strong id="operatorWaiting">12</strong>
+            <small>In queue</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Completed Today</span>
+            <strong id="operatorCompleted">14</strong>
+            <small>Farmers served</small>
+        </div>
+
+        <div class="small-stat">
+            <span>Average Processing</span>
+            <strong>6 min</strong>
+            <small>Per farmer</small>
+        </div>
+
+    </div>
+
+    <div class="queue-panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <span>Queue Management</span>
+                <h2>Today's Farmer Queue</h2>
+            </div>
+
+            <button class="primary-btn small-btn" onclick="addFarmer()">
+                + Add Farmer
+            </button>
+
+        </div>
+
+        <div class="centre-table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Token</th>
+                        <th>Farmer</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="queueTable">
+                    <!-- rows are rendered dynamically by the script below, from the live backend -->
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</main>
+
+<footer>
+
+    <div class="footer-bottom">
+        <p>© 2026 Farmer Procurement Status & Wait-Time Tracker | SIH Prototype</p>
+    </div>
+
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<script>
+
+const centreId = 1;
+const API = "http://localhost:8080/api";
+
+function badgeFor(status) {
+    if (status === "PROCESSING") return '<span class="badge blue">Processing</span>';
+    if (status === "COMPLETED") return '<span class="badge green">Completed</span>';
+    return '<span class="badge yellow">Waiting</span>';
+}
+
+function actionButtonFor(token) {
+    if (token.status === "WAITING") {
+        return `<button class="table-btn" onclick="processToken(${token.id})">Process</button>`;
+    }
+    if (token.status === "PROCESSING") {
+        return `<button class="table-btn" onclick="completeToken(${token.id})">Complete</button>`;
+    }
+    return `<span style="opacity:0.5">Done</span>`;
+}
+
+function renderQueue(tokens) {
+    const tbody = document.getElementById("queueTable");
+    tbody.innerHTML = "";
+
+    tokens.forEach(token => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><strong>#${token.tokenNumber}</strong></td>
+            <td>${token.farmerName}</td>
+            <td>${token.quantityQuintal ?? "-"} Qtl</td>
+            <td>${badgeFor(token.status)}</td>
+            <td>${actionButtonFor(token)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    const processing = tokens.find(t => t.status === "PROCESSING");
+    const waitingCount = tokens.filter(t => t.status === "WAITING").length;
+    const completedCount = tokens.filter(t => t.status === "COMPLETED").length;
+
+    document.getElementById("operatorCurrent").textContent = processing ? processing.tokenNumber : "-";
+    document.getElementById("operatorWaiting").textContent = waitingCount;
+    document.getElementById("operatorCompleted").textContent = completedCount;
+}
+
+function loadQueue() {
+    fetch(`${API}/centres/${centreId}/queue`)
+        .then(res => res.json())
+        .then(renderQueue)
+        .catch(err => console.error("Failed to load queue:", err));
+}
+
+function completeToken(tokenId) {
+    fetch(`${API}/tokens/${tokenId}/complete`, { method: "PATCH" })
+        .then(res => res.json())
+        .then(() => loadQueue())
+        .catch(err => alert("Error: " + err));
+}
+
+function processToken(tokenId) {
+    fetch(`${API}/tokens/${tokenId}/process`, { method: "PATCH" })
+        .then(res => res.json())
+        .then(() => loadQueue())
+        .catch(err => alert("Error: " + err));
+}
+
+function addFarmer() {
+    const farmerName = prompt("Farmer name:");
+    if (!farmerName) return;
+    const quantity = prompt("Quantity (quintal):");
+
+    fetch(`${API}/centres/${centreId}/tokens`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ farmerName: farmerName, quantityQuintal: Number(quantity) })
+    })
+        .then(res => res.json())
+        .then(() => loadQueue())
+        .catch(err => alert("Error: " + err));
+}
+
+// initial load
+loadQueue();
+
+// live refresh via WebSocket whenever anything changes (even from another tab)
+const socket = new SockJS("http://localhost:8080/ws");
+const stompClient = Stomp.over(socket);
+
+stompClient.connect({}, () => {
+    stompClient.subscribe("/topic/queue/" + centreId, () => {
+        loadQueue(); // re-fetch full table on any event, simplest to keep in sync
+    });
+});
+
+</script>
+
+</body>
+</html>
