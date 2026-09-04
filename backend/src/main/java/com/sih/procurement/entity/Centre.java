@@ -21,6 +21,7 @@ public class Centre {
     private String code;
 
     private String operatingHours;
+
     // Covers the "lack of information regarding procurement schedules" pain point from the problem statement
     private String currentCommodity;      // e.g. "Paddy (Dhaan)"
     private Double mspRatePerQuintal;     // e.g. 2300.0

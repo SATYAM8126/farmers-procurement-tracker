@@ -5,13 +5,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tokens")
+@Table(name = "slot_bookings")
 @Data
 @NoArgsConstructor
-public class Token {
+public class SlotBooking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,26 +20,21 @@ public class Token {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "centre_id", nullable = false)
-    @JsonIgnore // avoid serializing the lazy Hibernate proxy; centreId is already known from the URL
+    @JsonIgnore
     private Centre centre;
-
-    // Sequential number within a centre, shown to the farmer (e.g. #27)
-    @Column(nullable = false)
-    private Integer tokenNumber;
 
     @Column(nullable = false)
     private String farmerName;
 
-    private Double quantityQuintal;
+    private String mobileNumber;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TokenStatus status = TokenStatus.WAITING;
+    private LocalDate bookingDate;
+
+    // Hour of day the slot starts, e.g. 8 means the 8:00-9:00 AM slot
+    @Column(nullable = false)
+    private Integer slotHour;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    private LocalDateTime processingStartedAt;
-
-    private LocalDateTime completedAt;
 }

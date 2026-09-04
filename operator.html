@@ -53,8 +53,15 @@
     <div class="operator-header">
 
         <div>
-            <h2>Haridwar Procurement Centre</h2>
-            <p>Centre Code: HPC-001</p>
+            <h2 id="operatorCentreName">Haridwar Procurement Centre</h2>
+            <p>Centre Code: <span id="operatorCentreCode">HPC-001</span></p>
+            <p style="margin-top:6px;">
+                <label for="operatorCentreSelector" style="font-size:12px;opacity:.75;">Managing centre:</label>
+                <select id="operatorCentreSelector" onchange="switchCentre(this.value)"
+                        style="margin-left:6px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;font-size:13px;">
+                    <option value="">Loading centres...</option>
+                </select>
+            </p>
         </div>
 
         <div class="operator-date">
@@ -111,12 +118,22 @@
 
             <div>
                 <span>Queue Management</span>
-                <h2>Today's Farmer Queue</h2>
+                <h2 id="queueTitle">Farmer Queue</h2>
             </div>
 
-            <button class="primary-btn small-btn" onclick="addFarmer()">
-                + Add Farmer
-            </button>
+            <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+                <div>
+                    <label for="operatorDate" style="display:block;font-size:12px;margin-bottom:4px;">Date</label>
+                    <input id="operatorDate" type="date"
+                           style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+                </div>
+                <div>
+                    <label for="operatorHour" style="display:block;font-size:12px;margin-bottom:4px;">Slot</label>
+                    <select id="operatorHour"
+                            style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+                    </select>
+                </div>
+            </div>
 
         </div>
 
@@ -160,39 +177,126 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script>
-
-const centreId = 1;
+let centreId = Number(localStorage.getItem("spt_centre_id")) || 1;
 const API = "http://localhost:8080/api";
+
+let selectedDate = "";
+let selectedHour = 8;
+let stompClient = null;
+
+const dateInput = document.getElementById("operatorDate");
+const hourInput = document.getElementById("operatorHour");
+const queueTitle = document.getElementById("queueTitle");
+
+function getTodayString() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatHour(hour) {
+    const next = hour + 1;
+    const h1 = String(hour).padStart(2, "0") + ":00";
+    const h2 = String(next).padStart(2, "0") + ":00";
+    return `${h1} - ${h2}`;
+}
+
+function setupControls() {
+    selectedDate = getTodayString();
+    dateInput.value = selectedDate;
+    dateInput.min = selectedDate;
+
+    for (let hour = 8; hour <= 16; hour++) {
+        const option = document.createElement("option");
+        option.value = hour;
+        option.textContent = formatHour(hour);
+        hourInput.appendChild(option);
+    }
+
+    hourInput.value = String(selectedHour);
+
+    dateInput.addEventListener("change", () => {
+        selectedDate = dateInput.value;
+
+        if (!selectedDate) {
+            document.getElementById("queueTable").innerHTML =
+                '<tr><td colspan="5" style="text-align:center;padding:20px;">Please select a date.</td></tr>';
+            return;
+        }
+
+        closeQueueState();
+        loadQueue();
+        updateLiveSubscription();
+    });
+
+    hourInput.addEventListener("change", () => {
+        selectedHour = Number(hourInput.value);
+        closeQueueState();
+        loadQueue();
+        updateLiveSubscription();
+    });
+}
+
+function closeQueueState() {
+    queueTitle.textContent =
+        `Farmer Queue — ${formatDateForDisplay(selectedDate)} — ${formatHour(selectedHour)}`;
+}
+
+function formatDateForDisplay(date) {
+    if (!date) return "";
+    const [y, m, d] = date.split("-");
+    return `${d}-${m}-${y}`;
+}
 
 function badgeFor(status) {
     if (status === "PROCESSING") return '<span class="badge blue">Processing</span>';
     if (status === "COMPLETED") return '<span class="badge green">Completed</span>';
+    if (status === "NO_SHOW") {
+        return '<span class="badge" style="background:#fee2e2;color:#991b1b">No Show</span>';
+    }
     return '<span class="badge yellow">Waiting</span>';
 }
 
 function actionButtonFor(token) {
     if (token.status === "WAITING") {
-        return `<button class="table-btn" onclick="processToken(${token.id})">Process</button>`;
+        return `
+          <button class="table-btn" onclick="processNext()">Process Next</button>
+          <button class="table-btn" onclick="noShow(${token.id})">No Show</button>`;
     }
+
     if (token.status === "PROCESSING") {
         return `<button class="table-btn" onclick="completeToken(${token.id})">Complete</button>`;
     }
-    return `<span style="opacity:0.5">Done</span>`;
+
+    return '<span style="opacity:0.5">Done</span>';
 }
 
 function renderQueue(tokens) {
     const tbody = document.getElementById("queueTable");
     tbody.innerHTML = "";
 
+    if (!tokens.length) {
+        tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;padding:20px;">No bookings for this date and slot.</td></tr>';
+    }
+
     tokens.forEach(token => {
         const row = document.createElement("tr");
+
         row.innerHTML = `
             <td><strong>#${token.tokenNumber}</strong></td>
-            <td>${token.farmerName}</td>
-            <td>${token.quantityQuintal ?? "-"} Qtl</td>
+            <td>
+                <strong>${escapeHtml(token.farmerName)}</strong>
+                <div style="font-size:12px;opacity:.7;">
+                    ${escapeHtml(token.mobileNumber || "No mobile")}
+                </div>
+            </td>
+            <td>-</td>
             <td>${badgeFor(token.status)}</td>
-            <td>${actionButtonFor(token)}</td>
-        `;
+            <td>${actionButtonFor(token)}</td>`;
+
         tbody.appendChild(row);
     });
 
@@ -200,16 +304,43 @@ function renderQueue(tokens) {
     const waitingCount = tokens.filter(t => t.status === "WAITING").length;
     const completedCount = tokens.filter(t => t.status === "COMPLETED").length;
 
-    document.getElementById("operatorCurrent").textContent = processing ? processing.tokenNumber : "-";
+    document.getElementById("operatorCurrent").textContent =
+        processing ? processing.tokenNumber : "-";
+
     document.getElementById("operatorWaiting").textContent = waitingCount;
     document.getElementById("operatorCompleted").textContent = completedCount;
 }
 
-function loadQueue() {
-    fetch(`${API}/centres/${centreId}/queue`)
-        .then(res => res.json())
-        .then(renderQueue)
-        .catch(err => console.error("Failed to load queue:", err));
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+    }[c]));
+}
+
+async function loadQueue() {
+    if (!selectedDate) return;
+
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/${selectedHour}/queue?date=${encodeURIComponent(selectedDate)}`
+        );
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+        renderQueue(data.bookings || []);
+        closeQueueState();
+    } catch (err) {
+        console.error("Failed to load queue:", err);
+        document.getElementById("queueTable").innerHTML =
+            `<tr><td colspan="5" style="text-align:center;padding:20px;">Unable to load queue.</td></tr>`;
+    }
 }
 
 function loadSchedule() {
@@ -217,58 +348,166 @@ function loadSchedule() {
         .then(res => res.json())
         .then(centre => {
             document.getElementById("scheduleCommodity").textContent =
-                centre.currentCommodity ? `Currently procuring: ${centre.currentCommodity}` : "No active procurement set";
+                centre.currentCommodity
+                    ? `Currently procuring: ${centre.currentCommodity}`
+                    : "No active procurement set";
+
             document.getElementById("scheduleMsp").textContent =
-                centre.mspRatePerQuintal ? `MSP: ₹${centre.mspRatePerQuintal}/quintal` : "";
+                centre.mspRatePerQuintal
+                    ? `MSP: ₹${centre.mspRatePerQuintal}/quintal`
+                    : "";
+
             document.getElementById("scheduleDates").textContent =
                 centre.scheduleInfo || "";
         })
         .catch(err => console.error("Failed to load schedule:", err));
 }
 
-function completeToken(tokenId) {
-    fetch(`${API}/tokens/${tokenId}/complete`, { method: "PATCH" })
-        .then(res => res.json())
-        .then(() => loadQueue())
-        .catch(err => alert("Error: " + err));
+async function processNext() {
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/${selectedHour}/process-next?date=${encodeURIComponent(selectedDate)}`,
+            { method: "PATCH" }
+        );
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        await response.json();
+        await loadQueue();
+    } catch (err) {
+        alert(err.message || "Unable to process next farmer.");
+    }
 }
 
-function processToken(tokenId) {
-    fetch(`${API}/tokens/${tokenId}/process`, { method: "PATCH" })
-        .then(res => res.json())
-        .then(() => loadQueue())
-        .catch(err => alert("Error: " + err));
+async function completeToken(id) {
+    const quantityInput = prompt("Enter procured quantity (in quintals) for this farmer:");
+    if (quantityInput === null) return; // operator cancelled
+
+    const quantity = Number(quantityInput);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+        alert("Please enter a valid quantity in quintals (e.g. 12.5).");
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/${selectedHour}/complete/${id}` +
+            `?date=${encodeURIComponent(selectedDate)}&quantity=${encodeURIComponent(quantity)}`,
+            { method: "PATCH" }
+        );
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        await response.json();
+        await loadQueue();
+    } catch (err) {
+        alert(err.message || "Unable to complete token.");
+    }
 }
 
-function addFarmer() {
-    const farmerName = prompt("Farmer name:");
-    if (!farmerName) return;
-    const quantity = prompt("Quantity (quintal):");
+async function noShow(id) {
+    if (!confirm("Mark this farmer as NO-SHOW?")) return;
 
-    fetch(`${API}/centres/${centreId}/tokens`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ farmerName: farmerName, quantityQuintal: Number(quantity) })
-    })
-        .then(res => res.json())
-        .then(() => loadQueue())
-        .catch(err => alert("Error: " + err));
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/${selectedHour}/no-show/${id}?date=${encodeURIComponent(selectedDate)}`,
+            { method: "PATCH" }
+        );
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        await response.json();
+        await loadQueue();
+    } catch (err) {
+        alert(err.message || "Unable to mark farmer as no-show.");
+    }
 }
 
-// initial load
+function updateLiveSubscription() {
+    // Reconnect so the operator listens to exactly the currently selected
+    // date + slot instead of the old hardcoded date/hour.
+    if (stompClient) {
+        try {
+            stompClient.disconnect(() => connectWebSocket());
+        } catch (e) {
+            connectWebSocket();
+        }
+    } else {
+        connectWebSocket();
+    }
+}
+
+function connectWebSocket() {
+    const socket = new SockJS("http://localhost:8080/ws");
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, () => {
+        if (!selectedDate) return;
+
+        stompClient.subscribe(
+            `/topic/slot/${centreId}/${selectedDate}/${selectedHour}`,
+            () => loadQueue()
+        );
+    }, () => {
+        // If the socket temporarily fails, the normal refresh/load still works.
+    });
+}
+
+/* ---------- NEW FEATURE: Change managed centre (additive) ---------- */
+async function loadCentresList() {
+    const selector = document.getElementById("operatorCentreSelector");
+    if (!selector) return;
+    try {
+        const res = await fetch(`${API}/centres`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Could not load centres.");
+        const centres = await res.json();
+        selector.innerHTML = "";
+        centres.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            if (Number(c.id) === Number(centreId)) opt.selected = true;
+            selector.appendChild(opt);
+        });
+        const current = centres.find(c => Number(c.id) === Number(centreId));
+        if (current) {
+            const nameEl = document.getElementById("operatorCentreName");
+            const codeEl = document.getElementById("operatorCentreCode");
+            if (nameEl) nameEl.textContent = current.name;
+            if (codeEl) codeEl.textContent = current.code || "-";
+        }
+    } catch (e) {
+        selector.innerHTML = '<option value="">Unable to load centres</option>';
+        console.error("Centre list load failed:", e);
+    }
+}
+
+async function switchCentre(newId) {
+    if (!newId || Number(newId) === Number(centreId)) return;
+
+    centreId = Number(newId);
+    localStorage.setItem("spt_centre_id", String(centreId));
+
+    await loadCentresList();
+    closeQueueState();
+    await loadQueue();
+    loadSchedule();
+    updateLiveSubscription();
+}
+
+setupControls();
+closeQueueState();
 loadQueue();
 loadSchedule();
-
-// live refresh via WebSocket whenever anything changes (even from another tab)
-const socket = new SockJS("http://localhost:8080/ws");
-const stompClient = Stomp.over(socket);
-
-stompClient.connect({}, () => {
-    stompClient.subscribe("/topic/queue/" + centreId, () => {
-        loadQueue(); // re-fetch full table on any event, simplest to keep in sync
-    });
-});
-
+loadCentresList();
+connectWebSocket();
 </script>
 
 </body>

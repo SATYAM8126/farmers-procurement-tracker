@@ -33,6 +33,7 @@ public class CentreController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Lets an admin set/update the procurement schedule info for a centre
     @PatchMapping("/{id}/schedule")
     public ResponseEntity<Centre> updateSchedule(
             @PathVariable Long id,
@@ -48,6 +49,7 @@ public class CentreController {
         return ResponseEntity.ok(centreRepository.save(centre));
     }
 
+    // Small inline DTO - kept here since it's only used by this one endpoint
     public static class ScheduleUpdateRequest {
         private String currentCommodity;
         private Double mspRatePerQuintal;

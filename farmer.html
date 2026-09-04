@@ -5,6 +5,789 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmer Dashboard</title>
     <link rel="stylesheet" href="style.css">
+
+<style>
+/* Slot booking UI */
+.slot-booking-panel {
+    margin: 24px 0;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.06);
+}
+
+.slot-panel-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.slot-panel-heading span,
+.booking-form-header span {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    opacity: .65;
+}
+
+.slot-panel-heading h2,
+.booking-form-header h3 {
+    margin: 5px 0;
+}
+
+.slot-panel-heading p {
+    margin: 6px 0 0;
+    opacity: .72;
+}
+
+.slot-date-box {
+    min-width: 170px;
+}
+
+.slot-date-box label,
+.booking-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.slot-date-box input,
+.booking-fields input {
+    padding: 10px 12px;
+    border: 1px solid #cfd5dc;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.slot-list {
+    display: grid;
+    gap: 10px;
+}
+
+.slot-row {
+    display: grid;
+    grid-template-columns: 1.4fr .8fr .9fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 15px;
+    border: 1px solid #e2e6ea;
+    border-radius: 10px;
+}
+
+.slot-time {
+    font-weight: 700;
+}
+
+.slot-count {
+    font-size: 14px;
+    opacity: .8;
+}
+
+.slot-status {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.slot-status.available {
+    color: #15803d;
+}
+
+.slot-status.full {
+    color: #b91c1c;
+}
+
+.slot-book-btn,
+.confirm-slot-btn,
+.slot-cancel-btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.slot-book-btn,
+.confirm-slot-btn {
+    background: #166534;
+    color: #fff;
+}
+
+.slot-book-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.slot-cancel-btn {
+    background: #eef0f2;
+    color: #333;
+}
+
+.slot-message {
+    margin-bottom: 14px;
+    display: none;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.slot-message.success {
+    display: block;
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.slot-message.error {
+    display: block;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.booking-form {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid #dbe4dc;
+    border-radius: 10px;
+    background: #f8fbf8;
+}
+
+.booking-form-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.booking-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 15px;
+}
+
+.booking-fields input:focus,
+.slot-date-box input:focus {
+    outline: 2px solid rgba(22,101,52,.18);
+    border-color: #166534;
+}
+
+.slot-loading {
+    padding: 18px;
+    text-align: center;
+    opacity: .7;
+}
+
+@media (max-width: 700px) {
+    .slot-panel-heading,
+    .booking-form-header {
+        flex-direction: column;
+    }
+
+    .slot-date-box {
+        width: 100%;
+    }
+
+    .slot-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .slot-book-btn {
+        width: 100%;
+    }
+
+    .booking-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Kisan Sahayak Assistant ---------- */
+.assistant-fab {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000;
+    width: 62px;
+    height: 62px;
+    border: 0;
+    border-radius: 50%;
+    background: #166534;
+    color: #fff;
+    font-size: 27px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.assistant-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 11px 28px rgba(0,0,0,.24);
+}
+.assistant-window {
+    position: fixed;
+    right: 24px;
+    bottom: 98px;
+    z-index: 999;
+    width: min(380px, calc(100vw - 28px));
+    height: min(560px, calc(100vh - 130px));
+    background: #fff;
+    border: 1px solid #dfe5e1;
+    border-radius: 16px;
+    box-shadow: 0 16px 45px rgba(0,0,0,.2);
+    display: none;
+    overflow: hidden;
+    flex-direction: column;
+}
+.assistant-window.open {
+    display: flex;
+}
+.assistant-header {
+    padding: 14px 16px;
+    background: #166534;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.assistant-header-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.assistant-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,.16);
+    font-size: 21px;
+}
+.assistant-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+.assistant-header small {
+    opacity: .82;
+}
+.assistant-close {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 23px;
+    cursor: pointer;
+}
+.assistant-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f7faf8;
+}
+.assistant-msg {
+    max-width: 86%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+.assistant-msg.bot {
+    background: #fff;
+    border: 1px solid #e2e8e4;
+    color: #203028;
+    border-bottom-left-radius: 4px;
+}
+.assistant-msg.user {
+    margin-left: auto;
+    background: #166534;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.assistant-quick {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 9px 12px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
+.assistant-quick button {
+    flex: 0 0 auto;
+    border: 1px solid #cfd9d2;
+    background: #f7faf8;
+    color: #245333;
+    border-radius: 18px;
+    padding: 7px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.assistant-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
+.assistant-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #cfd5dc;
+    border-radius: 20px;
+    padding: 10px 13px;
+    outline: none;
+    font-size: 14px;
+}
+.assistant-input:focus {
+    border-color: #166534;
+    box-shadow: 0 0 0 2px rgba(22,101,52,.12);
+}
+.assistant-send {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    background: #166534;
+    color: #fff;
+    cursor: pointer;
+    font-size: 17px;
+}
+.assistant-typing {
+    display: none;
+    padding: 0 15px 8px;
+    background: #f7faf8;
+    color: #66736b;
+    font-size: 12px;
+}
+.assistant-typing.show {
+    display: block;
+}
+@media (max-width: 600px) {
+    .assistant-fab {
+        right: 15px;
+        bottom: 15px;
+    }
+    .assistant-window {
+        right: 10px;
+        bottom: 86px;
+        width: calc(100vw - 20px);
+        height: min(570px, calc(100vh - 105px));
+    }
+}
+
+
+/* ---------- Voice-enabled Kisan Sahayak ---------- */
+.assistant-tools {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.assistant-mic {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #cfd9d2;
+    border-radius: 50%;
+    background: #fff;
+    color: #166534;
+    cursor: pointer;
+    font-size: 17px;
+}
+.assistant-mic.listening {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #b91c1c;
+    animation: assistantPulse 1s infinite;
+}
+.assistant-speak {
+    float: right;
+    border: 0;
+    background: transparent;
+    color: #166534;
+    cursor: pointer;
+    font-size: 13px;
+    margin-left: 8px;
+}
+@keyframes assistantPulse {
+    50% { transform: scale(1.08); }
+}
+.assistant-language {
+    font-size: 11px;
+    opacity: .8;
+    margin-left: 4px;
+}
+
+
+/* ---------- Smart Queue Notifications ---------- */
+.smart-alert {
+    position: fixed;
+    top: 88px;
+    right: 22px;
+    z-index: 1100;
+    width: min(390px, calc(100vw - 28px));
+    display: none;
+    background: #fff;
+    border: 1px solid #dfe7e1;
+    border-left: 5px solid #166534;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.16);
+    padding: 13px 15px;
+    animation: smartAlertIn .22s ease-out;
+}
+.smart-alert.show { display: block; }
+.smart-alert.warning { border-left-color: #d97706; }
+.smart-alert.success { border-left-color: #15803d; }
+.smart-alert-title {
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+.smart-alert-body {
+    font-size: 13px;
+    color: #52606d;
+    line-height: 1.45;
+}
+.smart-alert-close {
+    float: right;
+    border: 0;
+    background: transparent;
+    font-size: 19px;
+    cursor: pointer;
+    color: #66736b;
+}
+.notification-permission {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f4f8f5;
+    font-size: 12px;
+    color: #52606d;
+}
+.notification-enable-btn {
+    margin-left: 7px;
+    border: 0;
+    border-radius: 6px;
+    padding: 5px 8px;
+    background: #166534;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+@keyframes smartAlertIn {
+    from { opacity: 0; transform: translateY(-8px) translateX(8px); }
+    to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+
+
+/* ---------- Smart Departure Advisor ---------- */
+.departure-card {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid #dbe7de;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbf8, #ffffff);
+}
+.departure-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+.departure-header h3 {
+    margin: 3px 0 5px;
+    font-size: 18px;
+}
+.departure-header p {
+    margin: 0;
+    color: #65736b;
+    font-size: 13px;
+}
+.departure-badge {
+    background: #e7f6eb;
+    color: #166534;
+    border-radius: 999px;
+    padding: 6px 9px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.departure-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+.departure-control {
+    flex: 1 1 180px;
+}
+.departure-control label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #3f4b44;
+    margin-bottom: 5px;
+}
+.departure-control input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cfdad2;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    background: #fff;
+}
+.departure-calc-btn {
+    border: 0;
+    border-radius: 8px;
+    background: #166534;
+    color: #fff;
+    font-weight: 800;
+    padding: 10px 14px;
+    cursor: pointer;
+}
+.departure-result {
+    margin-top: 13px;
+    padding: 12px 14px;
+    border-radius: 9px;
+    background: #fff;
+    border-left: 4px solid #166534;
+    color: #25312a;
+    line-height: 1.5;
+}
+.departure-result.warning {
+    border-left-color: #d97706;
+    background: #fffaf0;
+}
+.departure-result strong {
+    font-size: 16px;
+}
+.departure-breakdown {
+    margin-top: 7px;
+    color: #65736b;
+    font-size: 12px;
+}
+
+
+/* ---------- Smart Slot Recommendation ---------- */
+.smart-slot-card {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid #dbe7de;
+    border-radius: 12px;
+    background: #ffffff;
+}
+.smart-slot-card h3 {
+    margin: 3px 0 5px;
+    font-size: 18px;
+}
+.smart-slot-card .smart-slot-subtitle {
+    margin: 0 0 14px;
+    color: #65736b;
+    font-size: 13px;
+}
+.smart-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+}
+.smart-slot-item {
+    border: 1px solid #e0e7e2;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f9fbfa;
+}
+.smart-slot-item.recommended {
+    border-color: #70ad7e;
+    background: #f0faf2;
+}
+.smart-slot-item .slot-time {
+    font-weight: 800;
+    color: #17321f;
+}
+.smart-slot-item .slot-detail {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #66736b;
+}
+.smart-slot-recommendation {
+    margin-top: 13px;
+    padding: 12px 14px;
+    border-radius: 9px;
+    background: #f0faf2;
+    border-left: 4px solid #166534;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.smart-slot-recommendation strong {
+    font-size: 15px;
+}
+.smart-slot-btn {
+    margin-top: 8px;
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 10px;
+    background: #166534;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.smart-slot-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+
+/* ---------- Farmer Procurement History ---------- */
+.history-card {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid #dbe7de;
+    border-radius: 12px;
+    background: #fff;
+}
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.history-header h3 {
+    margin: 3px 0 4px;
+    font-size: 18px;
+}
+.history-header p {
+    margin: 0;
+    color: #68756d;
+    font-size: 13px;
+}
+.history-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+    margin-bottom: 12px;
+}
+.history-stat {
+    padding: 11px;
+    border-radius: 9px;
+    background: #f6f9f7;
+    text-align: center;
+}
+.history-stat strong {
+    display: block;
+    font-size: 20px;
+    color: #17321f;
+}
+.history-stat span {
+    font-size: 11px;
+    color: #68756d;
+}
+.history-table-wrap {
+    overflow-x: auto;
+}
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.history-table th,
+.history-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e8ece9;
+    text-align: left;
+    white-space: nowrap;
+}
+.history-table th {
+    color: #536159;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.history-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+}
+.history-status.completed {
+    background: #e7f6eb;
+    color: #166534;
+}
+.history-status.processing {
+    background: #e8f1ff;
+    color: #1d4ed8;
+}
+.history-status.waiting {
+    background: #fff4d6;
+    color: #9a6700;
+}
+.history-status.noshow {
+    background: #feecec;
+    color: #b91c1c;
+}
+.history-empty {
+    padding: 18px;
+    text-align: center;
+    color: #68756d;
+    background: #f8faf9;
+    border-radius: 9px;
+}
+.history-refresh-btn {
+    border: 1px solid #cfdad2;
+    border-radius: 7px;
+    background: #fff;
+    color: #166534;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+@media (max-width: 600px) {
+    .history-summary { grid-template-columns: 1fr; }
+}
+
+
+/* ---------- Current Season Procurement & Price ---------- */
+.season-price-card {
+    margin: 20px 0;
+    padding: 18px;
+    background: linear-gradient(135deg, #f7fbf8, #ffffff);
+    border: 1px solid #dfe8e1;
+    border-radius: 12px;
+}
+.season-price-header { display:flex; justify-content:space-between; gap:15px; align-items:flex-start; }
+.season-price-header h3 { margin:5px 0 6px; font-size:19px; }
+.season-price-header p { margin:0; color:#627068; font-size:13px; }
+.season-refresh-btn { border:1px solid #cfdad2; background:#fff; color:#166534; border-radius:7px; padding:8px 11px; font-weight:700; cursor:pointer; }
+.season-price-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:15px; }
+.season-price-stat { background:#fff; border:1px solid #e1e8e3; border-radius:10px; padding:14px; }
+.season-price-stat span { display:block; font-size:11px; color:#68756d; text-transform:uppercase; font-weight:700; }
+.season-price-stat strong { display:block; margin:7px 0 3px; font-size:20px; color:#153c24; }
+.season-price-stat small { color:#718078; font-size:11px; }
+.season-price-stat.price-stat { border-left:4px solid #166534; }
+.season-price-note { margin-top:10px; padding:9px 11px; background:#eef8f0; border-radius:8px; color:#31533b; font-size:12px; }
+@media(max-width:700px){ .season-price-grid{grid-template-columns:1fr;} .season-price-header{flex-direction:column;} }
+
+
+/* ---------- Language menu ---------- */
+.language-menu {
+    display:none; position:absolute; top:calc(100% + 7px); right:0; z-index:1200;
+    min-width:180px; max-height:420px; overflow:auto; padding:6px;
+    background:#fff; border:1px solid #d8e1db; border-radius:10px;
+    box-shadow:0 12px 28px rgba(0,0,0,.14);
+}
+.language-menu.open { display:block; }
+.language-menu button {
+    display:block; width:100%; border:0; background:#fff; text-align:left;
+    padding:9px 11px; border-radius:7px; cursor:pointer; font-size:13px;
+}
+.language-menu button:hover { background:#eef7f0; color:#166534; }
+.header-tools { position:relative; }
+
+</style>
+
 </head>
 <body>
 
@@ -50,6 +833,13 @@
 
 </nav>
 
+
+<div class="smart-alert" id="smartAlert" role="status" aria-live="polite">
+    <button class="smart-alert-close" onclick="hideSmartAlert()" aria-label="Close">×</button>
+    <div class="smart-alert-title" id="smartAlertTitle">Queue Update</div>
+    <div class="smart-alert-body" id="smartAlertBody"></div>
+</div>
+
 <main class="dashboard">
 
     <div class="page-title">
@@ -70,9 +860,15 @@
         <div class="farmer-avatar">👨‍🌾</div>
 
         <div>
-            <h2>Ramesh Kumar</h2>
+            <h2 id="farmerDisplayName">Farmer</h2>
             <p>Farmer ID: FP-1027</p>
-            <p>Procurement Centre: <strong>Haridwar Centre</strong></p>
+            <p>Procurement Centre:
+                <strong id="centreNameText">Loading...</strong>
+                <select id="centreSelector" onchange="switchCentre(this.value)"
+                        style="margin-left:8px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;font-size:13px;">
+                    <option value="">Loading centres...</option>
+                </select>
+            </p>
         </div>
 
         <div class="verified">
@@ -87,10 +883,10 @@
 
             <span data-i18n="yourToken">YOUR TOKEN</span>
 
-            <strong id="tokenNumber">27</strong>
+            <strong id="tokenNumber">-</strong>
 
-            <div class="token-status">
-                🟢 Active
+            <div class="token-status" id="farmerTokenStatus">
+                ⚪ No active booking
             </div>
 
         </div>
@@ -99,7 +895,7 @@
 
             <span data-i18n="farmersAhead">Farmers Ahead</span>
 
-            <strong id="ahead">12</strong>
+            <strong id="farmersAhead">0</strong>
 
             <small>in queue</small>
 
@@ -109,7 +905,7 @@
 
             <span data-i18n="estimatedWait">Estimated Wait</span>
 
-            <strong id="wait">72 min</strong>
+            <strong id="estimatedWait">0 min</strong>
 
             <small>approximate</small>
 
@@ -122,7 +918,7 @@
         <div class="panel-heading">
 
             <div>
-                <span>Live Update</span>
+                <span data-i18n="liveUpdate">Live Update</span>
                 <h2 data-i18n="liveQueue">Live Queue Status</h2>
             </div>
 
@@ -132,17 +928,19 @@
 
         </div>
 
+        <div style="padding: 0 0 16px; color: #52606d; font-size: 14px;" id="queueStatus">Select a visit date and book a slot to see your live queue.</div>
+
         <div class="queue-line">
 
             <div class="queue-item processing">
-                <span>Currently Processing</span>
+                <span data-i18n="currentlyProcessing">Currently Processing</span>
                 <strong id="currentToken">15</strong>
             </div>
 
             <div class="arrow">→</div>
 
             <div class="queue-item next-token">
-                <span>Next Token</span>
+                <span data-i18n="nextTokenLabel">Next Token</span>
                 <strong id="nextToken">16</strong>
             </div>
 
@@ -150,7 +948,7 @@
 
             <div class="queue-item your-token">
                 <span>Your Token</span>
-                <strong>27</strong>
+                <strong id="yourToken">-</strong>
             </div>
 
         </div>
@@ -158,8 +956,8 @@
         <div class="progress-container">
 
             <div class="progress-label">
-                <span>Queue Progress</span>
-                <strong id="progressText">55%</strong>
+                <span data-i18n="queueProgress">Queue Progress</span>
+                <strong id="progressText">0%</strong>
             </div>
 
             <div class="progress">
@@ -169,6 +967,134 @@
         </div>
 
     </div>
+
+
+
+
+
+    <section class="history-card" id="procurementHistoryCard">
+        <div class="history-header">
+            <div>
+                <span data-i18n="farmerRecords">Farmer Records</span>
+                <h3>📋 <span data-i18n="procurementHistory">Procurement History</span></h3>
+                <p data-i18n="historySubtitle">Your past and current procurement bookings at this centre.</p>
+            </div>
+            <button type="button" class="history-refresh-btn" onclick="loadProcurementHistory()">
+                ↻ Refresh
+            </button>
+        </div>
+
+        <div class="history-summary">
+            <div class="history-stat">
+                <strong id="historyTotal">0</strong>
+                <span data-i18n="totalBookings">Total bookings</span>
+            </div>
+            <div class="history-stat">
+                <strong id="historyCompleted">0</strong>
+                <span data-i18n="completed">Completed</span>
+            </div>
+            <div class="history-stat">
+                <strong id="historyQuantity">0</strong>
+                <span data-i18n="totalQuantity">Total quantity (Qtl)</span>
+            </div>
+        </div>
+
+        <div class="history-table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="date">Date</th>
+                        <th data-i18n="slot">Slot</th>
+                        <th data-i18n="token">Token</th>
+                        <th data-i18n="quantity">Quantity</th>
+                        <th data-i18n="status">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="smart-slot-card" id="smartSlotAdvisor">
+        <span data-i18n="smartBookingAdvisor">Smart Booking Advisor</span>
+        <h3>🌾 <span data-i18n="whichSlot">Which slot should I choose?</span></h3>
+        <p class="smart-slot-subtitle">
+            We compare available capacity and current queue conditions to suggest the least congested slot.
+        </p>
+
+        <div id="smartSlotGrid" class="smart-slot-grid">
+            <div class="smart-slot-item">
+                Loading slot recommendations…
+            </div>
+        </div>
+
+        <div id="smartSlotRecommendation" class="smart-slot-recommendation">
+            Checking today's procurement slots…
+        </div>
+    </section>
+
+    <!-- Current Season Procurement & Price Dashboard -->
+    <section class="season-price-card" id="seasonPriceDashboard">
+        <div class="season-price-header">
+            <div>
+                <span data-i18n="seasonLabel">Current Season</span>
+                <h3>🌾 <span data-i18n="procurementPriceTitle">Procurement & MSP Dashboard</span></h3>
+                <p data-i18n="procurementPriceSubtitle">Check what this centre is procuring now and the configured farmer price.</p>
+            </div>
+            <button type="button" class="season-refresh-btn" onclick="loadSeasonPriceDashboard()">↻ <span data-i18n="refresh">Refresh</span></button>
+        </div>
+        <div class="season-price-grid">
+            <div class="season-price-stat">
+                <span data-i18n="season">Season</span>
+                <strong id="seasonName">Kharif</strong>
+                <small id="seasonPeriod">June – October</small>
+            </div>
+            <div class="season-price-stat">
+                <span data-i18n="procurement">Procurement</span>
+                <strong id="currentCommodityDashboard">Loading…</strong>
+                <small data-i18n="centreConfigured">Centre configured</small>
+            </div>
+            <div class="season-price-stat price-stat">
+                <span data-i18n="farmerPrice">Farmer price / MSP</span>
+                <strong id="currentMspDashboard">₹ —</strong>
+                <small data-i18n="perQuintal">per quintal</small>
+            </div>
+        </div>
+        <div class="season-price-note" id="seasonPriceNote">Loading current procurement information…</div>
+    </section>
+
+    <section class="departure-card" id="departureAdvisor">
+        <div class="departure-header">
+            <div>
+                <span data-i18n="smartTravelAdvisor">Smart Travel Advisor</span>
+                <h3>🚜 <span data-i18n="leaveHome">Should I leave home now?</span></h3>
+                <p>Uses your live queue + travel time to suggest when you should leave.</p>
+            </div>
+            <div class="departure-badge">LIVE QUEUE</div>
+        </div>
+
+        <div class="departure-controls">
+            <div class="departure-control">
+                <label for="travelMinutes">Your travel time to centre</label>
+                <input type="number" id="travelMinutes" min="1" max="300"
+                       placeholder="e.g. 35" inputmode="numeric">
+            </div>
+            <div class="departure-control">
+                <label for="departureBuffer">Safety buffer (minutes)</label>
+                <input type="number" id="departureBuffer" min="0" max="60"
+                       value="10" inputmode="numeric">
+            </div>
+            <button type="button" class="departure-calc-btn" onclick="calculateDepartureAdvice()">
+                Check Now
+            </button>
+        </div>
+
+        <div class="departure-result" id="departureResult">
+            Enter your travel time and click <strong>Check Now</strong>.
+        </div>
+    </section>
+
+    <div class="notification-permission" id="notificationPermissionPanel"></div>
 
     <div class="alert-box">
 
@@ -181,15 +1107,76 @@
 
     </div>
 
+
+    <!-- Visit Slot Booking -->
+    <section class="slot-booking-panel" id="slotBookingPanel">
+        <div class="slot-panel-heading">
+            <div>
+                <span data-i18n="planVisit">Plan Your Visit</span>
+                <h2 data-i18n="bookSlot">Book Your Procurement Slot</h2>
+                <p>Check availability from home and visit the centre at your selected time.</p>
+            </div>
+            <div class="slot-date-box">
+                <label for="slotDate" data-i18n="visitDate">Visit Date</label>
+                <input type="date" id="slotDate">
+            </div>
+        </div>
+
+        <div id="slotMessage" class="slot-message" aria-live="polite"></div>
+
+        <div id="duplicateCard" class="duplicate-card" aria-live="assertive">
+            <strong>⚠️ You already have a booking for this slot.</strong>
+            <div class="duplicate-meta" id="duplicateDetails"></div>
+            <div class="duplicate-actions">
+                <button type="button" class="duplicate-view-btn" onclick="showExistingBooking()">
+                    View My Booking
+                </button>
+                <button type="button" class="duplicate-close-btn" onclick="hideDuplicateCard()">
+                    Close
+                </button>
+            </div>
+        </div>
+
+        <div id="slotList" class="slot-list">
+            <div class="slot-loading">Loading available slots...</div>
+        </div>
+
+        <div id="bookingForm" class="booking-form" style="display:none;">
+            <div class="booking-form-header">
+                <div>
+                    <span>Confirm your visit</span>
+                    <h3 id="selectedSlotLabel">Selected slot</h3>
+                </div>
+                <button type="button" class="slot-cancel-btn" onclick="closeBookingForm()">Cancel</button>
+            </div>
+
+            <div class="booking-fields">
+                <label>
+                    Farmer Name
+                    <input type="text" id="bookingFarmerName" value="" placeholder="Enter farmer name">
+                </label>
+
+                <label>
+                    Mobile Number
+                    <input type="tel" id="bookingMobile" placeholder="Enter 10-digit mobile number" maxlength="10">
+                </label>
+            </div>
+
+            <button type="button" id="confirmBookingBtn" class="confirm-slot-btn" onclick="confirmSlotBooking()">
+                Confirm Booking
+            </button>
+        </div>
+    </section>
+
     <div class="dashboard-grid">
 
         <div class="info-card">
 
             <div class="card-icon">📍</div>
 
-            <h3>Procurement Centre</h3>
+            <h3 data-i18n="procurementCentre">Procurement Centre</h3>
 
-            <p>Haridwar Procurement Centre</p>
+            <p id="procurementCentreName">Haridwar Procurement Centre</p>
 
             <span class="badge green">Open</span>
 
@@ -199,9 +1186,9 @@
 
             <div class="card-icon">🕐</div>
 
-            <h3>Operating Hours</h3>
+            <h3 data-i18n="operatingHours">Operating Hours</h3>
 
-            <p>08:00 AM – 05:00 PM</p>
+            <p id="operatingHoursText">08:00 AM – 05:00 PM</p>
 
             <span class="badge green">Open Now</span>
 
@@ -223,7 +1210,7 @@
 
             <div class="card-icon">🌾</div>
 
-            <h3>Current Procurement</h3>
+            <h3 data-i18n="currentProcurement">Current Procurement</h3>
 
             <p id="scheduleCommodity">Loading...</p>
             <p id="scheduleMsp"></p>
@@ -231,9 +1218,83 @@
 
         </div>
 
+        <div class="info-card" id="helplineCard">
+
+            <div class="card-icon">📞</div>
+
+            <h3>Centre Helpline</h3>
+
+            <p id="helplineCentreName">Loading...</p>
+            <p id="helplineNumberText" style="font-weight:600;font-size:15px;">—</p>
+            <p id="helplineHoursText" style="font-size:12px;opacity:.75;"></p>
+            <a href="#" id="helplineCallBtn" class="text-link" style="pointer-events:none;opacity:.5;">📞 Call Now</a>
+
+        </div>
+
+        <div class="info-card" id="paymentTrackerCard">
+
+            <div class="card-icon">💳</div>
+
+            <h3>Payment Tracker</h3>
+
+            <p>Status: <strong id="paymentStatusText">Pending centre confirmation</strong></p>
+            <p>Procurement Amount: <strong id="paymentAmountText">Pending centre confirmation</strong></p>
+            <p style="font-size:12px;opacity:.75;">Expected Payment: <span id="paymentExpectedText">Pending centre confirmation</span></p>
+
+        </div>
+
     </div>
 
 </main>
+
+
+<!-- Kisan Sahayak -->
+<button type="button" class="assistant-fab" id="assistantFab"
+        onclick="toggleAssistant()" aria-label="Open Kisan Sahayak">
+    🤖
+</button>
+
+<section class="assistant-window" id="assistantWindow" aria-label="Kisan Sahayak">
+    <div class="assistant-header">
+        <div class="assistant-header-main">
+            <div class="assistant-avatar">🤖</div>
+            <div>
+                <h3>Kisan Sahayak</h3>
+                <small>Procurement Assistant</small>
+            </div>
+        </div>
+        <button type="button" class="assistant-close" onclick="toggleAssistant()" aria-label="Close">×</button>
+    </div>
+
+    <div class="assistant-messages" id="assistantMessages">
+        <div class="assistant-msg bot">
+            Namaste! 👋 Main Kisan Sahayak hoon.<br>
+            Main aapki booking, token aur live queue ke baare mein bata sakta hoon.
+        </div>
+    </div>
+
+    <div class="assistant-typing" id="assistantTyping">Checking your procurement details…</div>
+
+    <div class="assistant-quick">
+        <button type="button" onclick="askAssistant('Mera token kya hai?')">🎟️ My token</button>
+        <button type="button" onclick="askAssistant('Mera queue status kya hai?')">📊 Queue</button>
+        <button type="button" onclick="askAssistant('Aaj ke slots batao')">🕐 Slots</button>
+        <button type="button" onclick="askAssistant('Meri booking kab hai?')">📅 Booking</button>
+    </div>
+
+    <div class="assistant-input-row">
+        <button type="button" class="assistant-mic" id="assistantMic"
+                onclick="toggleAssistantVoice()" aria-label="Speak to Kisan Sahayak">🎙️</button>
+        <input class="assistant-input" id="assistantInput"
+               type="text" placeholder="Ask about your procurement..."
+               autocomplete="off"
+               onkeydown="if(event.key==='Enter') sendAssistantMessage()">
+        <button type="button" class="assistant-send" onclick="sendAssistantMessage()">➤</button>
+    </div>
+    <div class="assistant-language" id="assistantVoiceHint" style="padding:0 14px 8px;">
+        🎙️ Voice: English / Hindi
+    </div>
+</section>
 
 <footer>
 
@@ -243,85 +1304,1790 @@
 
 </footer>
 
-<script src="language.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script>
+let centreId = Number(localStorage.getItem("spt_centre_id")) || 1;
+const API = "http://localhost:8080/api";
 
-const centreId = 1;
-// This should be this farmer's actual token number (e.g. read from login/session).
-// Change this to match a real tokenNumber you created via the backend for testing.
-const farmerToken = 27;
-
-function updateUI(currentToken, waitingCount) {
-    let wait = waitingCount * 6;
-
-    document.getElementById("currentToken").textContent = currentToken;
-    document.getElementById("nextToken").textContent = currentToken + 1;
-    document.getElementById("ahead").textContent = waitingCount;
-    document.getElementById("wait").textContent = wait + " min";
-
-    let progress = Math.min(
-        Math.round((currentToken / farmerToken) * 100),
-        100
-    );
-
-    document.getElementById("progressBar").style.width = progress + "%";
-    document.getElementById("progressText").textContent = progress + "%";
+// Demo identity is persisted so the farmer's dashboard survives page refreshes.
+const IDENTITY_KEY = "procurementFarmerIdentity";
+let savedIdentity = {};
+try {
+    savedIdentity = JSON.parse(localStorage.getItem(IDENTITY_KEY) || "{}");
+} catch (e) {
+    savedIdentity = {};
 }
 
-// load current state once when the page opens
-fetch("http://localhost:8080/api/centres/" + centreId + "/queue")
-    .then(res => res.json())
-    .then(tokens => {
-        let processing = tokens.find(t => t.status === "PROCESSING");
-        let waitingCount = tokens.filter(t => t.status === "WAITING").length;
-        updateUI(processing ? processing.tokenNumber : 0, waitingCount);
-    })
-    .catch(err => console.error("Failed to load initial queue state:", err));
+let farmerName = savedIdentity.name || "";
+let farmerMobile = savedIdentity.mobile || "";
+let myBooking = null;
+let selectedDate = "";
+let selectedSlotHour = null;
 
-// load the procurement schedule info (commodity, MSP rate, dates)
-fetch("http://localhost:8080/api/centres/" + centreId)
-    .then(res => res.json())
-    .then(centre => {
-        document.getElementById("scheduleCommodity").textContent =
-            centre.currentCommodity ? `Buying: ${centre.currentCommodity}` : "No active procurement";
-        document.getElementById("scheduleMsp").textContent =
-            centre.mspRatePerQuintal ? `MSP: ₹${centre.mspRatePerQuintal}/quintal` : "";
-        document.getElementById("scheduleDates").textContent =
-            centre.scheduleInfo || "";
-    })
-    .catch(err => console.error("Failed to load schedule:", err));
+const bookingForm = document.getElementById("bookingForm");
+const selectedSlotLabel = document.getElementById("selectedSlotLabel");
+const slotDateInput = document.getElementById("slotDate");
+const nameInput = document.getElementById("bookingFarmerName");
+const mobileInput = document.getElementById("bookingMobile");
 
-// live updates from here on, no more fake polling
-const socket = new SockJS("http://localhost:8080/ws");
-const stompClient = Stomp.over(socket);
+function todayString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+}
 
-stompClient.connect({}, () => {
-    stompClient.subscribe("/topic/queue/" + centreId, (message) => {
-        const event = JSON.parse(message.body);
-        updateUI(event.currentlyProcessingToken, event.waitingCount);
+function saveIdentity(name, mobile, booking = null) {
+    farmerName = name.trim();
+    farmerMobile = mobile.trim();
+
+    const existing = savedIdentity || {};
+    const identity = {
+        name: farmerName,
+        mobile: farmerMobile,
+        bookingDate: booking?.bookingDate || existing.bookingDate || null,
+        slotHour: booking?.slotHour ?? existing.slotHour ?? null,
+        tokenNumber: booking?.tokenNumber ?? existing.tokenNumber ?? null,
+        bookingId: booking?.id ?? existing.bookingId ?? null
+    };
+
+    savedIdentity = identity;
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+    updateFarmerProfile();
+}
+
+function updateFarmerProfile() {
+    const displayName = document.getElementById("farmerDisplayName");
+    if (displayName) displayName.textContent = farmerName || "Farmer";
+
+    if (nameInput && farmerName && !nameInput.value) {
+        nameInput.value = farmerName;
+    }
+    if (mobileInput && farmerMobile && !mobileInput.value) {
+        mobileInput.value = farmerMobile;
+    }
+}
+
+function clearBookingDashboard() {
+    myBooking = null;
+    const tokenEl = document.getElementById("tokenNumber");
+    const yourEl = document.getElementById("yourToken");
+    const aheadEl = document.getElementById("farmersAhead");
+    const waitEl = document.getElementById("estimatedWait");
+    const currentEl = document.getElementById("currentToken");
+    const nextEl = document.getElementById("nextToken");
+    const statusEl = document.getElementById("queueStatus");
+    const tokenStatusEl = document.getElementById("farmerTokenStatus");
+    const progressEl = document.getElementById("progressBar");
+
+    if (tokenEl) tokenEl.textContent = "-";
+    if (yourEl) yourEl.textContent = "-";
+    if (aheadEl) aheadEl.textContent = "0";
+    if (waitEl) waitEl.textContent = "0 min";
+    if (currentEl) currentEl.textContent = "-";
+    if (nextEl) nextEl.textContent = "-";
+    if (progressEl) progressEl.style.width = "0%";
+    const progressTextEl = document.getElementById("progressText");
+    if (progressTextEl) progressTextEl.textContent = "0%";
+    if (statusEl) statusEl.textContent = "No booking found for this date.";
+    if (tokenStatusEl) tokenStatusEl.textContent = "⚪ No booking for selected date";
+}
+
+function updateQueueUI(data) {
+    if (!myBooking) {
+        clearBookingDashboard();
+        return;
+    }
+
+    window.lastQueueData = data;
+
+    const current = data.currentlyProcessingToken ?? "-";
+    const next = data.nextToken ?? "-";
+    const bookings = data.bookings || [];
+    const capacity = Number(data.capacity || 5);
+
+    const currentEl = document.getElementById("currentToken");
+    const nextEl = document.getElementById("nextToken");
+    const yourEl = document.getElementById("yourToken");
+    const tokenEl = document.getElementById("tokenNumber");
+    const aheadEl = document.getElementById("farmersAhead");
+    const waitEl = document.getElementById("estimatedWait");
+    const progressEl = document.getElementById("progressBar");
+    const statusEl = document.getElementById("queueStatus");
+    const tokenStatusEl = document.getElementById("farmerTokenStatus");
+
+    if (currentEl) currentEl.textContent = current;
+    if (nextEl) nextEl.textContent = next;
+    if (yourEl) yourEl.textContent = `#${myBooking.tokenNumber}`;
+    if (tokenEl) tokenEl.textContent = myBooking.tokenNumber;
+
+    const ahead = bookings.filter(b =>
+        b.status === "WAITING" && Number(b.tokenNumber) < Number(myBooking.tokenNumber)
+    ).length;
+
+    const averageMinutes = Number(data.averageProcessingMinutes || 6);
+    const backendWait = Number(data.estimatedWaitMinutes);
+    const status = myBooking.status;
+
+    if (aheadEl) aheadEl.textContent = ahead;
+    if (waitEl) {
+        waitEl.textContent = Number.isFinite(backendWait)
+            ? `${Math.max(0, Math.round(backendWait))} min`
+            : `${ahead * averageMinutes} min`;
+    }
+    const progressPercent = Math.min(100, (Number(myBooking.tokenNumber) / capacity) * 100);
+    if (progressEl) progressEl.style.width = `${progressPercent}%`;
+
+    const progressTextEl = document.getElementById("progressText");
+    if (progressTextEl) progressTextEl.textContent = `${Math.round(progressPercent)}%`;
+
+    if (status === "PROCESSING") {
+        if (statusEl) statusEl.textContent = "🟢 Your turn is being processed now.";
+        if (tokenStatusEl) tokenStatusEl.textContent = "🟢 Processing now";
+    } else if (status === "COMPLETED") {
+        if (statusEl) statusEl.textContent = "✅ Procurement completed successfully.";
+        if (tokenStatusEl) tokenStatusEl.textContent = "✅ Completed";
+        if (waitEl) waitEl.textContent = "0 min";
+    } else if (status === "NO_SHOW") {
+        if (statusEl) statusEl.textContent = "⚠️ This booking was marked as no-show.";
+        if (tokenStatusEl) tokenStatusEl.textContent = "⚠️ No-show";
+    } else {
+        if (statusEl) statusEl.textContent = `🔔 Live queue — ${ahead} farmer${ahead === 1 ? "" : "s"} ahead of you.`;
+        if (tokenStatusEl) tokenStatusEl.textContent = "🟢 Waiting in queue";
+    }
+
+    notifyQueueChange(data);
+
+    // Keep the travel recommendation synchronized with live queue movement.
+    if (document.getElementById("travelMinutes")?.value) {
+        calculateDepartureAdvice();
+    }
+}
+
+
+/* ---------- Smart Queue Notification Engine ---------- */
+
+const NOTIFICATION_KEY = "procurementNotificationPermissionAsked";
+let lastKnownBookingStatus = null;
+let lastKnownAhead = null;
+let lastKnownCurrentToken = null;
+let lastKnownBookingId = null;
+
+function showSmartAlert(title, body, type = "success") {
+    const alertEl = document.getElementById("smartAlert");
+    const titleEl = document.getElementById("smartAlertTitle");
+    const bodyEl = document.getElementById("smartAlertBody");
+
+    if (!alertEl) return;
+
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = body;
+
+    alertEl.className = `smart-alert show ${type}`;
+
+    clearTimeout(window.smartAlertTimer);
+    window.smartAlertTimer = setTimeout(hideSmartAlert, 7000);
+}
+
+function hideSmartAlert() {
+    const alertEl = document.getElementById("smartAlert");
+    if (alertEl) alertEl.classList.remove("show");
+}
+
+function sendBrowserNotification(title, body, tag = "procurement-queue") {
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "granted") {
+        try {
+            new Notification(title, {
+                body,
+                tag,
+                icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50' font-size='50'>🌾</text></svg>"
+            });
+        } catch (e) {
+            console.warn("Browser notification failed:", e);
+        }
+    }
+}
+
+async function enableBrowserNotifications() {
+    if (!("Notification" in window)) {
+        showSmartAlert(
+            "Notifications unavailable",
+            "This browser does not support notifications. In-page alerts will still work.",
+            "warning"
+        );
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+
+        if (permission === "granted") {
+            localStorage.setItem(NOTIFICATION_KEY, "granted");
+            showSmartAlert(
+                "🔔 Notifications enabled",
+                "You will be alerted when your turn is approaching or your procurement status changes.",
+                "success"
+            );
+        } else {
+            localStorage.setItem(NOTIFICATION_KEY, "denied");
+            showSmartAlert(
+                "Notifications blocked",
+                "You can still receive live alerts inside the dashboard.",
+                "warning"
+            );
+        }
+    } catch (e) {
+        console.warn("Notification permission error:", e);
+    }
+
+    renderNotificationPermission();
+}
+
+function renderNotificationPermission() {
+    const panel = document.getElementById("notificationPermissionPanel");
+    if (!panel) return;
+
+    if (!("Notification" in window)) {
+        panel.innerHTML = "🔔 Browser notifications are not supported. Live dashboard alerts remain enabled.";
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        panel.innerHTML = "🔔 <strong>Notifications enabled</strong> — we'll alert you when your turn approaches.";
+    } else if (Notification.permission === "denied") {
+        panel.innerHTML = "🔕 Browser notifications are blocked. Live dashboard alerts remain enabled.";
+    } else {
+        panel.innerHTML =
+            '🔔 Get alerts when your turn approaches ' +
+            '<button type="button" class="notification-enable-btn" onclick="enableBrowserNotifications()">Enable</button>';
+    }
+}
+
+function notifyQueueChange(data) {
+    if (!myBooking) return;
+
+    const bookings = data.bookings || [];
+    const ahead = bookings.filter(b =>
+        b.status === "WAITING" &&
+        Number(b.tokenNumber) < Number(myBooking.tokenNumber)
+    ).length;
+
+    const current = data.currentlyProcessingToken ?? "-";
+    const status = myBooking.status;
+
+    // First load: establish baseline without spamming the farmer.
+    if (lastKnownBookingId === null) {
+        lastKnownBookingId = myBooking.id;
+        lastKnownBookingStatus = status;
+        lastKnownAhead = ahead;
+        lastKnownCurrentToken = current;
+        return;
+    }
+
+    if (myBooking.id !== lastKnownBookingId) {
+        lastKnownBookingId = myBooking.id;
+        lastKnownBookingStatus = status;
+        lastKnownAhead = ahead;
+        lastKnownCurrentToken = current;
+        return;
+    }
+
+    // Highest-priority status changes.
+    if (status !== lastKnownBookingStatus) {
+        if (status === "PROCESSING") {
+            const msg = `Token #${myBooking.tokenNumber} is being processed now. Please stay at the centre.`;
+            showSmartAlert("🟢 Your turn is now", msg, "success");
+            sendBrowserNotification("🟢 Your turn is now", msg, "your-turn");
+        } else if (status === "COMPLETED") {
+            const msg = "Your procurement has been completed successfully.";
+            showSmartAlert("✅ Procurement completed", msg, "success");
+            sendBrowserNotification("✅ Procurement completed", msg, "completed");
+
+            // Immediately reflect the completed procurement in history.
+            loadProcurementHistory();
+        } else if (status === "NO_SHOW") {
+            const msg = "Your booking was marked as no-show. Please contact the centre operator.";
+            showSmartAlert("⚠️ Booking update", msg, "warning");
+            sendBrowserNotification("⚠️ Booking update", msg, "no-show");
+
+            loadProcurementHistory();
+        }
+
+        lastKnownBookingStatus = status;
+    }
+
+    // Turn-approaching alert only when crossing the threshold.
+    if (
+        status === "WAITING" &&
+        ahead <= 1 &&
+        (lastKnownAhead === null || lastKnownAhead > 1)
+    ) {
+        const msg = ahead === 0
+            ? `Token #${myBooking.tokenNumber} is next. Please be ready.`
+            : `Only 1 farmer is ahead of you. Please be ready at the centre.`;
+
+        showSmartAlert("🔔 Your turn is approaching", msg, "warning");
+        sendBrowserNotification("🔔 Your turn is approaching", msg, "turn-approaching");
+    }
+
+    // Notify when the currently processed token moves forward.
+    if (
+        current !== lastKnownCurrentToken &&
+        current !== "-" &&
+        status === "WAITING" &&
+        ahead <= 2
+    ) {
+        const msg = `The queue moved forward. ${ahead} farmer${ahead === 1 ? "" : "s"} ahead of you.`;
+        showSmartAlert("📈 Queue moved", msg, "success");
+    }
+
+    lastKnownAhead = ahead;
+    lastKnownCurrentToken = current;
+}
+
+
+/* ---------- Smart Departure Advisor ---------- */
+
+const TRAVEL_TIME_KEY = "procurementFarmerTravelMinutes";
+const BUFFER_TIME_KEY = "procurementDepartureBuffer";
+
+function parseClockFromSlot(hour) {
+    const h = Number(hour);
+    if (!Number.isFinite(h)) return null;
+    const date = new Date(`${selectedDate}T${String(h).padStart(2, "0")}:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDateTime(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
     });
+}
+
+function formatDuration(minutes) {
+    const m = Math.max(0, Math.round(Number(minutes) || 0));
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    return rem ? `${h} hr ${rem} min` : `${h} hr`;
+}
+
+function calculateDepartureAdvice() {
+    const result = document.getElementById("departureResult");
+    const travelInput = document.getElementById("travelMinutes");
+    const bufferInput = document.getElementById("departureBuffer");
+
+    if (!result) return;
+
+    if (!myBooking) {
+        result.className = "departure-result warning";
+        result.innerHTML = "📅 Please select a date with an active booking first.";
+        return;
+    }
+
+    const travel = Number(travelInput?.value);
+    const buffer = Math.max(0, Number(bufferInput?.value || 10));
+
+    if (!Number.isFinite(travel) || travel < 1) {
+        result.className = "departure-result warning";
+        result.innerHTML = "🚜 Enter your approximate travel time to the procurement centre.";
+        travelInput?.focus();
+        return;
+    }
+
+    localStorage.setItem(TRAVEL_TIME_KEY, String(Math.round(travel)));
+    localStorage.setItem(BUFFER_TIME_KEY, String(Math.round(buffer)));
+
+    const bookings = window.lastQueueData?.bookings || [];
+    const ahead = bookings.filter(b =>
+        b.status === "WAITING" &&
+        Number(b.tokenNumber) < Number(myBooking.tokenNumber)
+    ).length;
+
+    const rawWait = Number(window.lastQueueData?.estimatedWaitMinutes);
+    const estimatedWait = Number.isFinite(rawWait)
+        ? Math.max(0, rawWait)
+        : ahead * Number(window.lastQueueData?.averageProcessingMinutes || 6);
+
+    const slotStart = parseClockFromSlot(myBooking.slotHour);
+
+    if (!slotStart) {
+        result.className = "departure-result warning";
+        result.innerHTML = "Unable to calculate the selected slot time.";
+        return;
+    }
+
+    // Expected turn = slot start + live estimated queue wait.
+    const expectedTurn = new Date(slotStart.getTime() + estimatedWait * 60000);
+
+    // Farmer should arrive slightly before expected turn.
+    const arrivalTarget = new Date(expectedTurn.getTime() - buffer * 60000);
+    const leaveAt = new Date(arrivalTarget.getTime() - travel * 60000);
+    const now = new Date();
+
+    let headline;
+    let type = "departure-result";
+
+    if (myBooking.status === "COMPLETED") {
+        headline = "✅ Your procurement is already completed.";
+    } else if (myBooking.status === "PROCESSING") {
+        headline = "🟢 Your token is being processed now — head to the centre immediately if you are not there.";
+        type += " warning";
+    } else if (myBooking.status === "NO_SHOW") {
+        headline = "⚠️ This booking is marked NO-SHOW. Contact the centre operator before travelling.";
+        type += " warning";
+    } else if (selectedDate === todayString() && leaveAt <= now) {
+        headline = "🚜 <strong>Leave now.</strong> Based on the live queue, your expected turn is approaching.";
+        type += " warning";
+    } else if (selectedDate === todayString()) {
+        const diff = Math.ceil((leaveAt - now) / 60000);
+        headline = `🕐 <strong>Leave in about ${formatDuration(diff)}.</strong>`;
+    } else {
+        headline = `📅 <strong>Plan to leave around ${formatDateTime(leaveAt)}.</strong>`;
+    }
+
+    result.className = type;
+    result.innerHTML = `
+        <div>${headline}</div>
+        <div class="departure-breakdown">
+            🎟️ Token #${myBooking.tokenNumber}
+            &nbsp;•&nbsp; 👨‍🌾 ${ahead} ahead
+            &nbsp;•&nbsp; ⏱️ Queue wait ${formatDuration(estimatedWait)}
+            <br>
+            🚜 Travel ${formatDuration(travel)}
+            &nbsp;•&nbsp; 🛡️ Buffer ${formatDuration(buffer)}
+            &nbsp;•&nbsp; 🎯 Expected turn ${formatDateTime(expectedTurn)}
+        </div>
+    `;
+}
+
+function restoreDepartureInputs() {
+    const travelInput = document.getElementById("travelMinutes");
+    const bufferInput = document.getElementById("departureBuffer");
+
+    const savedTravel = localStorage.getItem(TRAVEL_TIME_KEY);
+    const savedBuffer = localStorage.getItem(BUFFER_TIME_KEY);
+
+    if (travelInput && savedTravel) travelInput.value = savedTravel;
+    if (bufferInput && savedBuffer) bufferInput.value = savedBuffer;
+}
+
+
+/* ---------- Smart Slot Recommendation ---------- */
+
+let latestSlotRecommendations = [];
+
+function renderSmartSlotRecommendations(slots) {
+    const grid = document.getElementById("smartSlotGrid");
+    const recommendation = document.getElementById("smartSlotRecommendation");
+    if (!grid || !recommendation) return;
+
+    // Some backend versions return an array, while some older versions may
+    // wrap it in { slots: [...] }. Normalize both forms.
+    const rawSlots = Array.isArray(slots)
+        ? slots
+        : (Array.isArray(slots?.slots) ? slots.slots : []);
+
+    latestSlotRecommendations = rawSlots.map(s => {
+        const capacity = Number(s.capacity ?? 5);
+        const booked = Number(s.booked ?? s.bookedCount ?? 0);
+        const remaining = Number.isFinite(Number(s.remaining))
+            ? Number(s.remaining)
+            : Math.max(0, capacity - booked);
+
+        return {
+            ...s,
+            hour: Number(s.hour),
+            capacity,
+            booked,
+            remaining,
+            available: s.available !== false && remaining > 0
+        };
+    });
+
+    if (!latestSlotRecommendations.length) {
+        grid.innerHTML = '<div class="smart-slot-item">No slot data available.</div>';
+        recommendation.textContent = "No procurement slots are available for the selected date.";
+        return;
+    }
+
+    const available = latestSlotRecommendations
+        .filter(s => s.available && s.remaining > 0)
+        .sort((a, b) =>
+            (b.remaining - a.remaining) || (a.hour - b.hour)
+        );
+
+    const best = available[0] || null;
+
+    grid.innerHTML = latestSlotRecommendations.map(slot => {
+        const capacity = slot.capacity;
+        const remaining = slot.remaining;
+        const occupancy = capacity > 0
+            ? Math.round(((capacity - remaining) / capacity) * 100)
+            : 100;
+
+        const isBest = best && best.hour === slot.hour;
+
+        let condition = "Full";
+        if (slot.available) {
+            if (occupancy <= 20) condition = "Low congestion";
+            else if (occupancy <= 60) condition = "Moderate";
+            else condition = "Busy";
+        }
+
+        return `
+            <div class="smart-slot-item ${isBest ? "recommended" : ""}">
+                <div class="slot-time">${slot.label || formatSlot(slot.hour)}</div>
+                <div class="slot-detail">
+                    ${remaining}/${capacity} seats left<br>
+                    ${condition}
+                </div>
+                <button type="button" class="smart-slot-btn"
+                        ${slot.available ? "" : "disabled"}
+                        onclick="selectRecommendedSlot(${slot.hour})">
+                    ${isBest ? "⭐ Choose this" : "Choose slot"}
+                </button>
+            </div>
+        `;
+    }).join("");
+
+    if (best) {
+        recommendation.innerHTML =
+            `⭐ <strong>Recommended: ${best.label || formatSlot(best.hour)}</strong><br>` +
+            `${best.remaining}/${best.capacity} seats are available. This is currently the least-congested available slot.`;
+    } else {
+        recommendation.innerHTML =
+            `⚠️ <strong>All slots are full for ${selectedDate}.</strong><br>` +
+            `Please try another date or check again later.`;
+    }
+}
+function selectRecommendedSlot(hour) {
+    if (typeof bookSlot === "function") {
+        bookSlot(Number(hour));
+
+        const bookingForm = document.getElementById("bookingForm");
+        if (bookingForm) {
+            bookingForm.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+}
+
+async function loadSmartSlotRecommendations() {
+    try {
+        const slots = await getAssistantSlots();
+        renderSmartSlotRecommendations(slots);
+    } catch (error) {
+        console.warn("Smart slot recommendation unavailable:", error);
+        const recommendation = document.getElementById("smartSlotRecommendation");
+        if (recommendation) {
+            recommendation.textContent = "Unable to load slot recommendations right now.";
+        }
+    }
+}
+
+
+/* ---------- Farmer Procurement History ---------- */
+
+function historyStatusBadge(status) {
+    const s = String(status || "WAITING").toUpperCase();
+    let cls = "waiting";
+    if (s === "COMPLETED") cls = "completed";
+    else if (s === "PROCESSING") cls = "processing";
+    else if (s === "NO_SHOW") cls = "noshow";
+
+    return `<span class="history-status ${cls}">${s}</span>`;
+}
+
+function historyQuantityValue(booking) {
+    const value = Number(
+        booking.quantityQuintal ??
+        booking.quantity ??
+        booking.quantityQtl ??
+        0
+    );
+    return Number.isFinite(value) ? value : 0;
+}
+
+async function loadProcurementHistory() {
+    const tbody = document.getElementById("historyTableBody");
+    if (!tbody) return;
+
+    const normalizeMobile = value =>
+        String(value ?? "").replace(/\D/g, "");
+
+    const saved = savedIdentity || {};
+    const savedBookingId = saved.bookingId != null ? String(saved.bookingId) : "";
+    const savedDate = saved.bookingDate || "";
+    const savedHour = saved.slotHour != null ? Number(saved.slotHour) : null;
+    const savedToken = saved.tokenNumber != null ? Number(saved.tokenNumber) : null;
+    const currentMobile = normalizeMobile(farmerMobile);
+
+    if (!currentMobile && !savedBookingId && !savedDate) {
+        tbody.innerHTML = `
+            <tr><td colspan="5">
+                <div class="history-empty">
+                    Enter your mobile number in your booking profile to view procurement history.
+                </div>
+            </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = `
+        <tr><td colspan="5">
+            <div class="history-empty">Loading your procurement records…</div>
+        </td></tr>`;
+
+    try {
+        const dates = [];
+        const base = new Date();
+
+        // Last 30 days plus the saved booking date, if it is older than 30 days.
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(base);
+            d.setDate(base.getDate() - i);
+            dates.push(
+                `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`
+            );
+        }
+        if (savedDate && !dates.includes(savedDate)) dates.push(savedDate);
+
+        const responses = await Promise.all(
+            dates.map(async date => {
+                try {
+                    const response = await fetch(
+                        `${API}/centres/${centreId}/slots/bookings?date=${encodeURIComponent(date)}`,
+                        { cache: "no-store" }
+                    );
+                    if (!response.ok) return [];
+                    const data = await response.json();
+
+                    // Accept either a raw array or { bookings: [...] }.
+                    if (Array.isArray(data)) return data;
+                    if (Array.isArray(data?.bookings)) return data.bookings;
+                    return [];
+                } catch (_) {
+                    return [];
+                }
+            })
+        );
+
+        const allBookings = responses.flat();
+
+        const records = allBookings.filter(b => {
+            const bookingMobile = normalizeMobile(b.mobileNumber);
+
+            // Best match: exact booking id saved after booking.
+            if (savedBookingId && b.id != null && String(b.id) === savedBookingId) {
+                return true;
+            }
+
+            // Normal match: farmer's mobile number.
+            if (currentMobile && bookingMobile && bookingMobile === currentMobile) {
+                return true;
+            }
+
+            // Recovery for bookings created by an older frontend/backend that
+            // did not persist/return mobileNumber: match the saved booking
+            // date + slot + token + farmer name.
+            return Boolean(
+                savedDate &&
+                b.bookingDate === savedDate &&
+                savedHour != null &&
+                Number(b.slotHour) === savedHour &&
+                savedToken != null &&
+                Number(b.tokenNumber) === savedToken &&
+                farmerName &&
+                String(b.farmerName || "").trim().toLowerCase() === farmerName.trim().toLowerCase()
+            );
+        }).sort((a, b) => {
+            const da = `${a.bookingDate || ""}-${String(a.slotHour ?? 0).padStart(2,"0")}-${String(a.tokenNumber ?? 0).padStart(3,"0")}`;
+            const db = `${b.bookingDate || ""}-${String(b.slotHour ?? 0).padStart(2,"0")}-${String(b.tokenNumber ?? 0).padStart(3,"0")}`;
+            return db.localeCompare(da);
+        });
+
+        const unique = [];
+        const seen = new Set();
+
+        records.forEach(b => {
+            const key = b.id != null
+                ? String(b.id)
+                : `${b.bookingDate}-${b.slotHour}-${b.tokenNumber}-${b.farmerName}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(b);
+            }
+        });
+
+        const completed = unique.filter(
+            b => String(b.status || "").toUpperCase() === "COMPLETED"
+        ).length;
+
+        const quantity = unique.reduce(
+            (sum, b) => sum + historyQuantityValue(b),
+            0
+        );
+
+        document.getElementById("historyTotal").textContent = unique.length;
+        document.getElementById("historyCompleted").textContent = completed;
+        document.getElementById("historyQuantity").textContent =
+            quantity % 1 === 0 ? quantity : quantity.toFixed(2);
+
+        if (!unique.length) {
+            tbody.innerHTML = `
+                <tr><td colspan="5">
+                    <div class="history-empty">
+                        No procurement records found for this farmer in the last 30 days.
+                    </div>
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = unique.map(b => `
+            <tr>
+                <td>${escapeHistory(b.bookingDate || "-")}</td>
+                <td>${escapeHistory(formatSlot(b.slotHour))}</td>
+                <td><strong>#${escapeHistory(b.tokenNumber ?? "-")}</strong></td>
+                <td>${escapeHistory(historyQuantityValue(b) || "-")} Qtl</td>
+                <td>${historyStatusBadge(b.status)}</td>
+            </tr>
+        `).join("");
+
+    } catch (error) {
+        console.error("History load failed:", error);
+        tbody.innerHTML = `
+            <tr><td colspan="5">
+                <div class="history-empty">
+                    Unable to load procurement history. Check that the backend is running.
+                </div>
+            </td></tr>`;
+    }
+}
+function escapeHistory(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+    }[c]));
+}
+
+async function loadMyBooking() {
+    if (!selectedDate || !farmerName || !farmerMobile) {
+        clearBookingDashboard();
+        return null;
+    }
+
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/bookings?date=${encodeURIComponent(selectedDate)}`
+        );
+        if (!response.ok) throw new Error("Unable to load bookings.");
+
+        const bookings = await response.json();
+
+        myBooking = bookings
+            .filter(b => b.bookingDate === selectedDate)
+            .filter(b =>
+                (farmerMobile && b.mobileNumber === farmerMobile) ||
+                (!farmerMobile && b.farmerName === farmerName)
+            )
+            .sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+
+        if (!myBooking) {
+            clearBookingDashboard();
+            return null;
+        }
+
+        // Keep the farmer profile aligned with the actual booking returned by backend.
+        if (myBooking.farmerName && myBooking.farmerName !== farmerName) {
+            saveIdentity(myBooking.farmerName, myBooking.mobileNumber || farmerMobile);
+        }
+
+        return myBooking;
+    } catch (err) {
+        console.error("My booking load failed:", err);
+        clearBookingDashboard();
+        return null;
+    }
+}
+
+async function loadMyQueue() {
+    if (!myBooking) return;
+
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/${myBooking.slotHour}/queue?date=${encodeURIComponent(selectedDate)}`
+        );
+        if (!response.ok) throw new Error("Queue unavailable.");
+        const data = await response.json();
+        updateQueueUI(data);
+    } catch (err) {
+        console.error("Queue load failed:", err);
+    }
+}
+
+async function refreshDashboard() {
+    await loadMyBooking();
+    await loadMyQueue();
+}
+
+function loadSlots() {
+    const date = slotDateInput ? slotDateInput.value : "";
+    selectedDate = date;
+
+    const list = document.getElementById("slotList");
+    if (!list) return;
+
+    if (!date) {
+        list.innerHTML = '<div class="slot-loading">Please select a visit date to see available slots.</div>';
+        closeBookingForm();
+        clearBookingDashboard();
+        return;
+    }
+
+    list.innerHTML = '<div class="slot-loading">Loading available slots...</div>';
+
+    fetch(`${API}/centres/${centreId}/slots?date=${encodeURIComponent(date)}`)
+        .then(async res => {
+            const text = await res.text();
+            if (!res.ok) throw new Error(text || "Unable to load slots.");
+            return JSON.parse(text);
+        })
+        .then(slots => {
+            list.innerHTML = "";
+
+            // Keep Smart Booking Advisor synchronized with the selected date.
+            renderSmartSlotRecommendations(slots);
+
+            slots.forEach(slot => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "slot-option";
+                button.dataset.hour = slot.hour;
+                button.disabled = !slot.available;
+                button.textContent = `${slot.label} — ${slot.remaining}/${slot.capacity} left`;
+
+                if (slot.available) {
+                    button.onclick = () => bookSlot(slot.hour);
+                }
+
+                list.appendChild(button);
+            });
+        })
+        .catch(err => {
+            console.error("Slot availability failed:", err);
+            list.innerHTML = '<div class="slot-loading">Unable to load slots. Please try again.</div>';
+        });
+}
+
+function bookSlot(hour) {
+    hideDuplicateCard();
+    const confirmBtn = document.getElementById("confirmBookingBtn");
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Confirm Booking";
+    }
+
+    selectedSlotHour = hour;
+    const slot = document.querySelector(`[data-hour="${hour}"]`);
+    if (slot) selectedSlotLabel.textContent = slot.textContent.split(" — ")[0];
+    updateFarmerProfile();
+    bookingForm.style.display = "block";
+    bookingForm.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeBookingForm() {
+    bookingForm.style.display = "none";
+    selectedSlotHour = null;
+}
+
+
+function showMessage(text, type = "error") {
+    const message = document.getElementById("slotMessage");
+    if (!message) return;
+    message.textContent = text;
+    message.className = `slot-message ${type}`;
+}
+
+function hideDuplicateCard() {
+    const card = document.getElementById("duplicateCard");
+    if (card) card.classList.remove("show");
+}
+
+function showExistingBooking() {
+    hideDuplicateCard();
+
+    if (!myBooking) return;
+
+    const target = document.getElementById("queueStatus");
+    if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    updateQueueUI({
+        currentlyProcessingToken: "-",
+        nextToken: "-",
+        bookings: [],
+        capacity: 5
+    });
+
+    showMessage(
+        `Your existing booking is Token #${myBooking.tokenNumber} for ${myBooking.bookingDate}, ${String(myBooking.slotHour).padStart(2, "0")}:00–${String(Number(myBooking.slotHour) + 1).padStart(2, "0")}:00.`,
+        "error"
+    );
+}
+
+function showDuplicateBooking(data) {
+    const card = document.getElementById("duplicateCard");
+    const details = document.getElementById("duplicateDetails");
+    const confirmBtn = document.getElementById("confirmBookingBtn");
+
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    const token = data?.tokenNumber != null ? `Token #${data.tokenNumber}` : "Token assigned";
+    const status = data?.status || "WAITING";
+    const date = data?.date || selectedDate;
+    const hour = data?.slotHour != null ? Number(data.slotHour) : selectedSlotHour;
+
+    const time = Number.isFinite(hour)
+        ? `${String(hour).padStart(2, "0")}:00–${String(hour + 1).padStart(2, "0")}:00`
+        : "selected slot";
+
+    if (details) {
+        details.innerHTML =
+            `${token} &nbsp;•&nbsp; <strong>${status}</strong><br>` +
+            `${date} &nbsp;•&nbsp; ${time}`;
+    }
+
+    if (card) card.classList.add("show");
+
+    showMessage("This farmer already has an active booking for the selected slot.", "error");
+}
+
+async function checkDuplicateBeforeBooking(name, mobile) {
+    try {
+        const response = await fetch(
+            `${API}/centres/${centreId}/slots/bookings?date=${encodeURIComponent(selectedDate)}`
+        );
+
+        if (!response.ok) return null;
+
+        const bookings = await response.json();
+
+        const existing = bookings.find(b =>
+            Number(b.slotHour) === Number(selectedSlotHour) &&
+            b.mobileNumber &&
+            b.mobileNumber.replace(/\D/g, "") === mobile &&
+            ["WAITING", "PROCESSING"].includes(b.status)
+        );
+
+        if (existing) {
+            myBooking = existing;
+            saveIdentity(existing.farmerName || name, mobile, existing);
+            return existing;
+        }
+
+        return null;
+    } catch (err) {
+        console.warn("Duplicate pre-check unavailable:", err);
+        return null;
+    }
+}
+
+async function confirmSlotBooking() {
+    const name = nameInput ? nameInput.value.trim() : "";
+    const mobile = mobileInput ? mobileInput.value.trim() : "";
+    const confirmBtn = document.getElementById("confirmBookingBtn");
+
+    hideDuplicateCard();
+
+    if (!name) {
+        showMessage("Please enter farmer name.", "error");
+        nameInput?.focus();
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(mobile)) {
+        showMessage("Please enter a valid 10-digit mobile number.", "error");
+        mobileInput?.focus();
+        return;
+    }
+
+    if (!selectedDate) {
+        showMessage("Please select a visit date first.", "error");
+        slotDateInput?.focus();
+        return;
+    }
+
+    if (selectedSlotHour === null) {
+        showMessage("Please select a slot.", "error");
+        return;
+    }
+
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Checking...";
+    }
+
+    try {
+        // Fast client-side check so the farmer gets a friendly message
+        // before the POST request whenever the existing booking is visible.
+        const existing = await checkDuplicateBeforeBooking(name, mobile);
+
+        if (existing) {
+            showDuplicateBooking({
+                tokenNumber: existing.tokenNumber,
+                status: existing.status,
+                date: existing.bookingDate,
+                slotHour: existing.slotHour
+            });
+            return;
+        }
+
+        if (confirmBtn) confirmBtn.textContent = "Booking...";
+
+        const response = await fetch(`${API}/centres/${centreId}/slots/book`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                farmerName: name,
+                mobileNumber: mobile,
+                date: selectedDate,
+                hour: selectedSlotHour
+            })
+        });
+
+        const text = await response.text();
+
+        if (!response.ok) {
+            let data = null;
+            try {
+                data = JSON.parse(text);
+            } catch (_) {}
+
+            if (response.status === 409 && data?.error === "ALREADY_BOOKED") {
+                myBooking = data;
+                saveIdentity(data.farmerName || name, data.mobileNumber || mobile, {
+                    bookingDate: data.date,
+                    slotHour: data.slotHour,
+                    tokenNumber: data.tokenNumber
+                });
+                showDuplicateBooking(data);
+                return;
+            }
+
+            throw new Error(data?.message || text || "Booking failed.");
+        }
+
+        const booking = JSON.parse(text);
+
+        saveIdentity(name, mobile, booking);
+        myBooking = booking;
+
+        showMessage(
+            `✅ Booking confirmed! Token #${booking.tokenNumber} — ${booking.farmerName}`,
+            "success"
+        );
+
+        closeBookingForm();
+        await loadSlots();
+        await refreshDashboard();
+        loadProcurementHistory();
+
+    } catch (error) {
+        console.error(error);
+        showMessage(error.message || "Booking failed. Please try another slot.", "error");
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Confirm Booking";
+        }
+    }
+}
+
+/* ---------- Language + Accessibility ---------- */
+const LANGUAGE_KEY = "farmerDashboardLanguage";
+const languageNames = {
+    en: "English", hi: "हिन्दी", ml: "മലയാളം", ta: "தமிழ்", kn: "ಕನ್ನಡ",
+    or: "ଓଡ଼ିଆ", te: "తెలుగు", bn: "বাংলা", mr: "मराठी"
+};
+const voiceLocales = {
+    en: "en-IN", hi: "hi-IN", ml: "ml-IN", ta: "ta-IN", kn: "kn-IN",
+    or: "or-IN", te: "te-IN", bn: "bn-IN", mr: "mr-IN"
+};
+const translations = {
+    en: { dashboard:"Farmer Dashboard", listen:"Listen", yourToken:"YOUR TOKEN", farmersAhead:"Farmers Ahead", estimatedWait:"Estimated Wait", liveQueue:"Live Queue Status", turnApproaching:"Your turn is approaching", seasonLabel:"Current Season", procurementPriceTitle:"Procurement & MSP Dashboard", procurementPriceSubtitle:"Check what this centre is procuring now and the configured farmer price.", refresh:"Refresh", season:"Season", procurement:"Procurement", farmerPrice:"Farmer price / MSP", perQuintal:"per quintal", centreConfigured:"Centre configured", currentInfo:"Current procurement information is loaded from this centre's settings." },
+    hi: { dashboard:"किसान डैशबोर्ड", listen:"सुनें", yourToken:"आपका टोकन", farmersAhead:"आपसे आगे किसान", estimatedWait:"अनुमानित प्रतीक्षा", liveQueue:"लाइव कतार स्थिति", turnApproaching:"आपकी बारी आने वाली है", seasonLabel:"वर्तमान सीज़न", procurementPriceTitle:"खरीद एवं MSP डैशबोर्ड", procurementPriceSubtitle:"इस केंद्र पर अभी क्या खरीदा जा रहा है और किसान के लिए निर्धारित मूल्य देखें।", refresh:"रिफ्रेश", season:"सीज़न", procurement:"खरीद", farmerPrice:"किसान मूल्य / MSP", perQuintal:"प्रति क्विंटल", centreConfigured:"केंद्र द्वारा निर्धारित", currentInfo:"वर्तमान खरीद की जानकारी केंद्र की सेटिंग से ली गई है।" },
+    ml: { dashboard:"കർഷക ഡാഷ്ബോർഡ്", listen:"കേൾക്കുക", yourToken:"നിങ്ങളുടെ ടോക്കൺ", farmersAhead:"മുന്നിലുള്ള കർഷകർ", estimatedWait:"അനുമാനിച്ച കാത്തിരിപ്പ്", liveQueue:"തത്സമയ ക്യൂ സ്ഥിതി", turnApproaching:"നിങ്ങളുടെ ഊഴം അടുത്തിരിക്കുന്നു", seasonLabel:"നിലവിലെ സീസൺ", procurementPriceTitle:"സംഭരണം & MSP ഡാഷ്ബോർഡ്", procurementPriceSubtitle:"ഈ കേന്ദ്രത്തിൽ ഇപ്പോൾ സംഭരിക്കുന്ന വിളയും നിശ്ചയിച്ച കർഷക വിലയും കാണുക.", refresh:"പുതുക്കുക", season:"സീസൺ", procurement:"സംഭരണം", farmerPrice:"കർഷക വില / MSP", perQuintal:"ഒരു ക്വിന്റലിന്", centreConfigured:"കേന്ദ്രം നിശ്ചയിച്ചത്", currentInfo:"നിലവിലെ സംഭരണ വിവരം കേന്ദ്ര ക്രമീകരണത്തിൽ നിന്നാണ്." },
+    ta: { dashboard:"விவசாயி டாஷ்போர்டு", listen:"கேளுங்கள்", yourToken:"உங்கள் டோக்கன்", farmersAhead:"முன்னால் உள்ள விவசாயிகள்", estimatedWait:"மதிப்பிடப்பட்ட காத்திருப்பு", liveQueue:"நேரடி வரிசை நிலை", turnApproaching:"உங்கள் முறை நெருங்குகிறது", seasonLabel:"தற்போதைய பருவம்", procurementPriceTitle:"கொள்முதல் & MSP டாஷ்போர்டு", procurementPriceSubtitle:"இந்த மையத்தில் தற்போது கொள்முதல் செய்யப்படும் பயிரையும் நிர்ணயிக்கப்பட்ட விவசாயி விலையையும் பார்க்கவும்.", refresh:"புதுப்பி", season:"பருவம்", procurement:"கொள்முதல்", farmerPrice:"விவசாயி விலை / MSP", perQuintal:"ஒரு குவிண்டலுக்கு", centreConfigured:"மையம் அமைத்தது", currentInfo:"தற்போதைய கொள்முதல் தகவல் மைய அமைப்பிலிருந்து பெறப்பட்டது." },
+    kn: { dashboard:"ರೈತ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", listen:"ಕೇಳಿ", yourToken:"ನಿಮ್ಮ ಟೋಕನ್", farmersAhead:"ಮುಂದಿರುವ ರೈತರು", estimatedWait:"ಅಂದಾಜು ಕಾಯುವಿಕೆ", liveQueue:"ಲೈವ್ ಸರದಿ ಸ್ಥಿತಿ", turnApproaching:"ನಿಮ್ಮ ಸರದಿ ಸಮೀಪಿಸುತ್ತಿದೆ", seasonLabel:"ಪ್ರಸ್ತುತ ಋತು", procurementPriceTitle:"ಖರೀದಿ & MSP ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", procurementPriceSubtitle:"ಈ ಕೇಂದ್ರದಲ್ಲಿ ಈಗ ಖರೀದಿಸಲಾಗುತ್ತಿರುವ ಬೆಳೆ ಮತ್ತು ನಿಗದಿತ ರೈತ ಬೆಲೆಯನ್ನು ನೋಡಿ.", refresh:"ರಿಫ್ರೆಶ್", season:"ಋತು", procurement:"ಖರೀದಿ", farmerPrice:"ರೈತ ಬೆಲೆ / MSP", perQuintal:"ಪ್ರತಿ ಕ್ವಿಂಟಲ್‌ಗೆ", centreConfigured:"ಕೇಂದ್ರ ನಿಗದಿಪಡಿಸಿದೆ", currentInfo:"ಪ್ರಸ್ತುತ ಖರೀದಿ ಮಾಹಿತಿ ಕೇಂದ್ರದ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಂದ ಪಡೆಯಲಾಗಿದೆ." },
+    or: { dashboard:"କୃଷକ ଡ୍ୟାସବୋର୍ଡ", listen:"ଶୁଣନ୍ତୁ", yourToken:"ଆପଣଙ୍କ ଟୋକେନ", farmersAhead:"ଆଗରେ ଥିବା ଚାଷୀ", estimatedWait:"ଆନୁମାନିକ ଅପେକ୍ଷା", liveQueue:"ଲାଇଭ୍ କ୍ୟୁ ସ୍ଥିତି", turnApproaching:"ଆପଣଙ୍କ ପାଳି ନିକଟରେ", seasonLabel:"ବର୍ତ୍ତମାନ ଋତୁ", procurementPriceTitle:"କ୍ରୟ ଓ MSP ଡ୍ୟାସବୋର୍ଡ", procurementPriceSubtitle:"ଏହି କେନ୍ଦ୍ରରେ ବର୍ତ୍ତମାନ କେଉଁ ଫସଲ କ୍ରୟ ହେଉଛି ଏବଂ ନିର୍ଦ୍ଧାରିତ ଚାଷୀ ମୂଲ୍ୟ ଦେଖନ୍ତୁ।", refresh:"ରିଫ୍ରେଶ", season:"ଋତୁ", procurement:"କ୍ରୟ", farmerPrice:"ଚାଷୀ ମୂଲ୍ୟ / MSP", perQuintal:"ପ୍ରତି କ୍ୱିଣ୍ଟାଲ", centreConfigured:"କେନ୍ଦ୍ର ନିର୍ଦ୍ଧାରିତ", currentInfo:"ବର୍ତ୍ତମାନର କ୍ରୟ ସୂଚନା କେନ୍ଦ୍ର ସେଟିଂରୁ ନିଆଯାଇଛି।" },
+    te: { dashboard:"రైతు డ్యాష్‌బోర్డ్", listen:"వినండి", yourToken:"మీ టోకెన్", farmersAhead:"మీ ముందు ఉన్న రైతులు", estimatedWait:"అంచనా వేచి ఉండే సమయం", liveQueue:"లైవ్ క్యూ స్థితి", turnApproaching:"మీ వంతు దగ్గరలో ఉంది", seasonLabel:"ప్రస్తుత సీజన్", procurementPriceTitle:"కొనుగోలు & MSP డ్యాష్‌బోర్డ్", procurementPriceSubtitle:"ఈ కేంద్రంలో ప్రస్తుతం కొనుగోలు చేస్తున్న పంటను మరియు నిర్ణయించిన రైతు ధరను చూడండి.", refresh:"రిఫ్రెష్", season:"సీజన్", procurement:"కొనుగోలు", farmerPrice:"రైతు ధర / MSP", perQuintal:"క్వింటాల్‌కు", centreConfigured:"కేంద్రం నిర్ణయించింది", currentInfo:"ప్రస్తుత కొనుగోలు సమాచారం కేంద్ర సెట్టింగ్‌ల నుండి పొందబడింది." },
+    bn: { dashboard:"কৃষক ড্যাশবোর্ড", listen:"শুনুন", yourToken:"আপনার টোকেন", farmersAhead:"আপনার আগে কৃষক", estimatedWait:"আনুমানিক অপেক্ষা", liveQueue:"লাইভ সারি অবস্থা", turnApproaching:"আপনার পালা আসছে", seasonLabel:"বর্তমান মরসুম", procurementPriceTitle:"ক্রয় ও MSP ড্যাশবোর্ড", procurementPriceSubtitle:"এই কেন্দ্রে এখন কোন ফসল কেনা হচ্ছে এবং নির্ধারিত কৃষক মূল্য দেখুন।", refresh:"রিফ্রেশ", season:"মরসুম", procurement:"ক্রয়", farmerPrice:"কৃষক মূল্য / MSP", perQuintal:"প্রতি কুইন্টাল", centreConfigured:"কেন্দ্র নির্ধারিত", currentInfo:"বর্তমান ক্রয়ের তথ্য কেন্দ্রের সেটিংস থেকে নেওয়া হয়েছে।" },
+    mr: { dashboard:"शेतकरी डॅशबोर्ड", listen:"ऐका", yourToken:"तुमचा टोकन", farmersAhead:"तुमच्या पुढे शेतकरी", estimatedWait:"अंदाजे प्रतीक्षा", liveQueue:"लाईव्ह रांग स्थिती", turnApproaching:"तुमची पाळी जवळ आली आहे", seasonLabel:"सध्याचा हंगाम", procurementPriceTitle:"खरेदी आणि MSP डॅशबोर्ड", procurementPriceSubtitle:"या केंद्रावर सध्या कोणती पिके खरेदी होत आहेत आणि निश्चित शेतकरी किंमत पहा.", refresh:"रिफ्रेश", season:"हंगाम", procurement:"खरेदी", farmerPrice:"शेतकरी किंमत / MSP", perQuintal:"प्रति क्विंटल", centreConfigured:"केंद्राने निश्चित केले", currentInfo:"सध्याची खरेदी माहिती केंद्राच्या सेटिंगमधून घेतली आहे." }
+};
+
+const extraTranslations = {
+ en:{liveUpdate:"Live Update",currentlyProcessing:"Currently Processing",nextTokenLabel:"Next Token",queueProgress:"Queue Progress",farmerRecords:"Farmer Records",procurementHistory:"Procurement History",historySubtitle:"Your past and current procurement bookings at this centre.",totalBookings:"Total bookings",completed:"Completed",totalQuantity:"Total quantity (Qtl)",date:"Date",slot:"Slot",token:"Token",quantity:"Quantity",status:"Status",smartBookingAdvisor:"Smart Booking Advisor",whichSlot:"Which slot should I choose?",smartTravelAdvisor:"Smart Travel Advisor",leaveHome:"Should I leave home now?",planVisit:"Plan Your Visit",bookSlot:"Book Your Procurement Slot",visitDate:"Visit Date",procurementCentre:"Procurement Centre",operatingHours:"Operating Hours",currentProcurement:"Current Procurement"},
+ hi:{liveUpdate:"लाइव अपडेट",currentlyProcessing:"अभी प्रक्रिया में",nextTokenLabel:"अगला टोकन",queueProgress:"कतार प्रगति",farmerRecords:"किसान रिकॉर्ड",procurementHistory:"खरीद इतिहास",historySubtitle:"इस केंद्र पर आपकी पिछली और वर्तमान खरीद बुकिंग।",totalBookings:"कुल बुकिंग",completed:"पूर्ण",totalQuantity:"कुल मात्रा (क्विंटल)",date:"तारीख",slot:"स्लॉट",token:"टोकन",quantity:"मात्रा",status:"स्थिति",smartBookingAdvisor:"स्मार्ट बुकिंग सलाहकार",whichSlot:"मुझे कौन सा स्लॉट चुनना चाहिए?",smartTravelAdvisor:"स्मार्ट यात्रा सलाहकार",leaveHome:"क्या मुझे अभी घर से निकलना चाहिए?",planVisit:"अपनी यात्रा की योजना बनाएं",bookSlot:"अपना खरीद स्लॉट बुक करें",visitDate:"यात्रा की तारीख",procurementCentre:"खरीद केंद्र",operatingHours:"कार्य समय",currentProcurement:"वर्तमान खरीद"},
+ ml:{liveUpdate:"തത്സമയ അപ്ഡേറ്റ്",currentlyProcessing:"ഇപ്പോൾ പ്രോസസ്സ് ചെയ്യുന്നു",nextTokenLabel:"അടുത്ത ടോക്കൺ",queueProgress:"ക്യൂ പുരോഗതി",farmerRecords:"കർഷക രേഖകൾ",procurementHistory:"സംഭരണ ചരിത്രം",historySubtitle:"ഈ കേന്ദ്രത്തിലെ നിങ്ങളുടെ മുൻകാലവും നിലവിലെ സംഭരണ ബുക്കിംഗുകളും.",totalBookings:"ആകെ ബുക്കിംഗുകൾ",completed:"പൂർത്തിയായി",totalQuantity:"ആകെ അളവ് (ക്വിന്റൽ)",date:"തീയതി",slot:"സ്ലോട്ട്",token:"ടോക്കൺ",quantity:"അളവ്",status:"സ്ഥിതി",smartBookingAdvisor:"സ്മാർട്ട് ബുക്കിംഗ് ഉപദേഷ്ടാവ്",whichSlot:"ഏത് സ്ലോട്ട് തിരഞ്ഞെടുക്കണം?",smartTravelAdvisor:"സ്മാർട്ട് യാത്രാ ഉപദേഷ്ടാവ്",leaveHome:"ഇപ്പോൾ വീട്ടിൽ നിന്ന് പുറപ്പെടണോ?",planVisit:"നിങ്ങളുടെ സന്ദർശനം ആസൂത്രണം ചെയ്യുക",bookSlot:"നിങ്ങളുടെ സംഭരണ സ്ലോട്ട് ബുക്ക് ചെയ്യുക",visitDate:"സന്ദർശന തീയതി",procurementCentre:"സംഭരണ കേന്ദ്രം",operatingHours:"പ്രവർത്തന സമയം",currentProcurement:"നിലവിലെ സംഭരണം"},
+ ta:{liveUpdate:"நேரடி புதுப்பிப்பு",currentlyProcessing:"தற்போது செயலாக்கம்",nextTokenLabel:"அடுத்த டோக்கன்",queueProgress:"வரிசை முன்னேற்றம்",farmerRecords:"விவசாயி பதிவுகள்",procurementHistory:"கொள்முதல் வரலாறு",historySubtitle:"இந்த மையத்தில் உங்கள் முந்தைய மற்றும் தற்போதைய கொள்முதல் முன்பதிவுகள்.",totalBookings:"மொத்த முன்பதிவுகள்",completed:"முடிந்தது",totalQuantity:"மொத்த அளவு (குவிண்டல்)",date:"தேதி",slot:"ஸ்லாட்",token:"டோக்கன்",quantity:"அளவு",status:"நிலை",smartBookingAdvisor:"ஸ்மார்ட் முன்பதிவு ஆலோசகர்",whichSlot:"எந்த ஸ்லாட்டை தேர்வு செய்ய வேண்டும்?",smartTravelAdvisor:"ஸ்மார்ட் பயண ஆலோசகர்",leaveHome:"இப்போது வீட்டிலிருந்து புறப்படவா?",planVisit:"உங்கள் வருகையை திட்டமிடுங்கள்",bookSlot:"உங்கள் கொள்முதல் ஸ்லாட்டை முன்பதிவு செய்யுங்கள்",visitDate:"வருகை தேதி",procurementCentre:"கொள்முதல் மையம்",operatingHours:"செயல்பாட்டு நேரம்",currentProcurement:"தற்போதைய கொள்முதல்"},
+ kn:{liveUpdate:"ಲೈವ್ ಅಪ್‌ಡೇಟ್",currentlyProcessing:"ಪ್ರಸ್ತುತ ಪ್ರಕ್ರಿಯೆ",nextTokenLabel:"ಮುಂದಿನ ಟೋಕನ್",queueProgress:"ಸರದಿ ಪ್ರಗತಿ",farmerRecords:"ರೈತ ದಾಖಲೆಗಳು",procurementHistory:"ಖರೀದಿ ಇತಿಹಾಸ",historySubtitle:"ಈ ಕೇಂದ್ರದಲ್ಲಿನ ನಿಮ್ಮ ಹಿಂದಿನ ಮತ್ತು ಪ್ರಸ್ತುತ ಖರೀದಿ ಬುಕಿಂಗ್‌ಗಳು.",totalBookings:"ಒಟ್ಟು ಬುಕಿಂಗ್‌ಗಳು",completed:"ಪೂರ್ಣಗೊಂಡಿದೆ",totalQuantity:"ಒಟ್ಟು ಪ್ರಮಾಣ (ಕ್ವಿಂಟಲ್)",date:"ದಿನಾಂಕ",slot:"ಸ್ಲಾಟ್",token:"ಟೋಕನ್",quantity:"ಪ್ರಮಾಣ",status:"ಸ್ಥಿತಿ",smartBookingAdvisor:"ಸ್ಮಾರ್ಟ್ ಬುಕಿಂಗ್ ಸಲಹೆಗಾರ",whichSlot:"ಯಾವ ಸ್ಲಾಟ್ ಆಯ್ಕೆ ಮಾಡಬೇಕು?",smartTravelAdvisor:"ಸ್ಮಾರ್ಟ್ ಪ್ರಯಾಣ ಸಲಹೆಗಾರ",leaveHome:"ಈಗ ಮನೆಯಿಂದ ಹೊರಡಬೇಕೇ?",planVisit:"ನಿಮ್ಮ ಭೇಟಿಯನ್ನು ಯೋಜಿಸಿ",bookSlot:"ನಿಮ್ಮ ಖರೀದಿ ಸ್ಲಾಟ್ ಬುಕ್ ಮಾಡಿ",visitDate:"ಭೇಟಿ ದಿನಾಂಕ",procurementCentre:"ಖರೀದಿ ಕೇಂದ್ರ",operatingHours:"ಕಾರ್ಯ ಸಮಯ",currentProcurement:"ಪ್ರಸ್ತುತ ಖರೀದಿ"},
+ or:{liveUpdate:"ଲାଇଭ୍ ଅପଡେଟ୍",currentlyProcessing:"ବର୍ତ୍ତମାନ ପ୍ରକ୍ରିୟାଧୀନ",nextTokenLabel:"ପରବର୍ତ୍ତୀ ଟୋକେନ",queueProgress:"କ୍ୟୁ ପ୍ରଗତି",farmerRecords:"ଚାଷୀ ରେକର୍ଡ",procurementHistory:"କ୍ରୟ ଇତିହାସ",historySubtitle:"ଏହି କେନ୍ଦ୍ରରେ ଆପଣଙ୍କ ପୂର୍ବ ଓ ବର୍ତ୍ତମାନ କ୍ରୟ ବୁକିଂ।",totalBookings:"ମୋଟ ବୁକିଂ",completed:"ସମାପ୍ତ",totalQuantity:"ମୋଟ ପରିମାଣ (କ୍ୱିଣ୍ଟାଲ)",date:"ତାରିଖ",slot:"ସ୍ଲଟ୍",token:"ଟୋକେନ୍",quantity:"ପରିମାଣ",status:"ସ୍ଥିତି",smartBookingAdvisor:"ସ୍ମାର୍ଟ ବୁକିଂ ପରାମର୍ଶଦାତା",whichSlot:"କେଉଁ ସ୍ଲଟ୍ ବାଛିବି?",smartTravelAdvisor:"ସ୍ମାର୍ଟ ଯାତ୍ରା ପରାମର୍ଶଦାତା",leaveHome:"ଏବେ ଘରୁ ବାହାରିବି କି?",planVisit:"ଆପଣଙ୍କ ଯାତ୍ରା ଯୋଜନା କରନ୍ତୁ",bookSlot:"ଆପଣଙ୍କ କ୍ରୟ ସ୍ଲଟ୍ ବୁକ୍ କରନ୍ତୁ",visitDate:"ଭ୍ରମଣ ତାରିଖ",procurementCentre:"କ୍ରୟ କେନ୍ଦ୍ର",operatingHours:"କାର୍ଯ୍ୟ ସମୟ",currentProcurement:"ବର୍ତ୍ତମାନ କ୍ରୟ"},
+ te:{liveUpdate:"లైవ్ అప్‌డేట్",currentlyProcessing:"ప్రస్తుతం ప్రాసెస్ అవుతోంది",nextTokenLabel:"తదుపరి టోకెన్",queueProgress:"క్యూ పురోగతి",farmerRecords:"రైతు రికార్డులు",procurementHistory:"కొనుగోలు చరిత్ర",historySubtitle:"ఈ కేంద్రంలోని మీ గత మరియు ప్రస్తుత కొనుగోలు బుకింగ్‌లు.",totalBookings:"మొత్తం బుకింగ్‌లు",completed:"పూర్తయింది",totalQuantity:"మొత్తం పరిమాణం (క్వింటల్)",date:"తేదీ",slot:"స్లాట్",token:"టోకెన్",quantity:"పరిమాణం",status:"స్థితి",smartBookingAdvisor:"స్మార్ట్ బుకింగ్ సలహాదారు",whichSlot:"ఏ స్లాట్ ఎంచుకోవాలి?",smartTravelAdvisor:"స్మార్ట్ ప్రయాణ సలహాదారు",leaveHome:"ఇప్పుడే ఇంటి నుంచి బయలుదేరాలా?",planVisit:"మీ సందర్శనను ప్లాన్ చేయండి",bookSlot:"మీ కొనుగోలు స్లాట్‌ను బుక్ చేయండి",visitDate:"సందర్శన తేదీ",procurementCentre:"కొనుగోలు కేంద్రం",operatingHours:"పని సమయం",currentProcurement:"ప్రస్తుత కొనుగోలు"},
+ bn:{liveUpdate:"লাইভ আপডেট",currentlyProcessing:"বর্তমানে প্রক্রিয়াধীন",nextTokenLabel:"পরবর্তী টোকেন",queueProgress:"সারির অগ্রগতি",farmerRecords:"কৃষক রেকর্ড",procurementHistory:"ক্রয় ইতিহাস",historySubtitle:"এই কেন্দ্রে আপনার আগের ও বর্তমান ক্রয় বুকিং।",totalBookings:"মোট বুকিং",completed:"সম্পন্ন",totalQuantity:"মোট পরিমাণ (কুইন্টাল)",date:"তারিখ",slot:"স্লট",token:"টোকেন",quantity:"পরিমাণ",status:"অবস্থা",smartBookingAdvisor:"স্মার্ট বুকিং সহায়ক",whichSlot:"কোন স্লট বেছে নেব?",smartTravelAdvisor:"স্মার্ট ভ্রমণ সহায়ক",leaveHome:"এখন কি বাড়ি থেকে বের হব?",planVisit:"আপনার ভ্রমণ পরিকল্পনা করুন",bookSlot:"আপনার ক্রয় স্লট বুক করুন",visitDate:"ভিজিটের তারিখ",procurementCentre:"ক্রয় কেন্দ্র",operatingHours:"কাজের সময়",currentProcurement:"বর্তমান ক্রয়"},
+ mr:{liveUpdate:"लाईव्ह अपडेट",currentlyProcessing:"सध्या प्रक्रिया सुरू",nextTokenLabel:"पुढील टोकन",queueProgress:"रांगेची प्रगती",farmerRecords:"शेतकरी नोंदी",procurementHistory:"खरेदी इतिहास",historySubtitle:"या केंद्रावरील तुमच्या मागील आणि सध्याच्या खरेदी बुकिंग्ज.",totalBookings:"एकूण बुकिंग",completed:"पूर्ण",totalQuantity:"एकूण प्रमाण (क्विंटल)",date:"तारीख",slot:"स्लॉट",token:"टोकन",quantity:"प्रमाण",status:"स्थिती",smartBookingAdvisor:"स्मार्ट बुकिंग सल्लागार",whichSlot:"कोणता स्लॉट निवडावा?",smartTravelAdvisor:"स्मार्ट प्रवास सल्लागार",leaveHome:"आता घरातून निघावे का?",planVisit:"तुमच्या भेटीचे नियोजन करा",bookSlot:"तुमचा खरेदी स्लॉट बुक करा",visitDate:"भेटीची तारीख",procurementCentre:"खरेदी केंद्र",operatingHours:"कामकाजाची वेळ",currentProcurement:"सध्याची खरेदी"}
+};
+Object.keys(extraTranslations).forEach(lang => Object.assign(translations[lang], extraTranslations[lang]));
+
+let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "en";
+if (!translations[currentLanguage]) currentLanguage = "en";
+
+function toggleLanguageMenu() {
+    const menu = document.getElementById("languageMenu");
+    if (menu) menu.classList.toggle("open");
+}
+function changeLanguage(lang) {
+    if (!translations[lang]) return;
+    currentLanguage = lang;
+    localStorage.setItem(LANGUAGE_KEY, lang);
+    const name = document.getElementById("languageName");
+    if (name) name.textContent = languageNames[lang];
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (translations[lang][key]) el.textContent = translations[lang][key];
+    });
+    const menu = document.getElementById("languageMenu");
+    if (menu) menu.classList.remove("open");
+    updateVoiceHint();
+    if (typeof loadSeasonPriceDashboard === "function") loadSeasonPriceDashboard();
+}
+function updateVoiceHint() {
+    const hint = document.getElementById("assistantVoiceHint");
+    if (hint) hint.textContent = `🎙️ Voice: ${languageNames[currentLanguage]}`;
+}
+
+/* ---------- Current Season Procurement & Price ---------- */
+function detectCurrentSeason(date = new Date()) {
+    const month = date.getMonth() + 1;
+    if (month >= 6 && month <= 10) return { name:"Kharif", period:"June – October" };
+    return { name:"Rabi", period:"November – April" };
+}
+async function loadSeasonPriceDashboard() {
+    const commodityEl = document.getElementById("currentCommodityDashboard");
+    const mspEl = document.getElementById("currentMspDashboard");
+    const note = document.getElementById("seasonPriceNote");
+    const season = detectCurrentSeason();
+    document.getElementById("seasonName")?.replaceChildren(document.createTextNode(season.name));
+    document.getElementById("seasonPeriod")?.replaceChildren(document.createTextNode(season.period));
+    try {
+        const response = await fetch(`${API}/centres/${centreId}`, { cache:"no-store" });
+        if (!response.ok) throw new Error("Centre data unavailable");
+        const centre = await response.json();
+        const commodity = centre.currentCommodity || "Procurement not configured";
+        const price = Number(centre.mspRatePerQuintal);
+        if (commodityEl) commodityEl.textContent = commodity;
+        if (mspEl) mspEl.textContent = Number.isFinite(price) && price > 0 ? `₹ ${price.toLocaleString("en-IN")}` : "₹ —";
+        if (note) note.textContent = Number.isFinite(price) && price > 0
+            ? `${translations[currentLanguage].currentInfo} ${commodity} — ₹${price.toLocaleString("en-IN")}/quintal.`
+            : `${translations[currentLanguage].currentInfo} Price is not configured yet.`;
+
+        // Also mirror onto the "Current Procurement" info-card, which uses
+        // separate element IDs and was never wired up previously.
+        const scheduleCommodityEl = document.getElementById("scheduleCommodity");
+        const scheduleMspEl = document.getElementById("scheduleMsp");
+        const scheduleDatesEl = document.getElementById("scheduleDates");
+        if (scheduleCommodityEl) scheduleCommodityEl.textContent = commodity;
+        if (scheduleMspEl) scheduleMspEl.textContent = Number.isFinite(price) && price > 0
+            ? `MSP: ₹${price.toLocaleString("en-IN")}/quintal`
+            : "";
+        if (scheduleDatesEl) scheduleDatesEl.textContent = centre.scheduleInfo || "";
+    } catch (e) {
+        if (commodityEl) commodityEl.textContent = "Unavailable";
+        if (mspEl) mspEl.textContent = "₹ —";
+        if (note) note.textContent = "Could not load centre procurement information. Please check the backend.";
+        console.error("Season/price dashboard error", e);
+
+        const scheduleCommodityEl = document.getElementById("scheduleCommodity");
+        if (scheduleCommodityEl) scheduleCommodityEl.textContent = "Unavailable";
+    }
+}
+
+/* ---------- Screen status voice ---------- */
+function buildFarmerScreenSummary() {
+    const booking = myBooking;
+    const token = booking?.tokenNumber ?? document.getElementById("tokenNumber")?.textContent ?? "-";
+    const status = booking?.status || document.getElementById("farmerTokenStatus")?.textContent || "No active booking";
+    const ahead = document.getElementById("farmersAhead")?.textContent || "0";
+    const wait = document.getElementById("estimatedWait")?.textContent || "0 min";
+    const current = document.getElementById("currentToken")?.textContent || "-";
+    const next = document.getElementById("nextToken")?.textContent || "-";
+    const date = selectedDate || "today";
+    const slot = booking?.slotHour != null ? formatSlot(booking.slotHour) : "no slot selected";
+    const commodity = document.getElementById("currentCommodityDashboard")?.textContent || "current procurement";
+    const price = document.getElementById("currentMspDashboard")?.textContent || "price unavailable";
+    return `Farmer dashboard. Current procurement is ${commodity}. Farmer price is ${price} per quintal. Visit date ${date}. Your token is number ${token}. Status is ${status}. There are ${ahead} farmers ahead of you. Estimated wait is ${wait}. Currently processing token ${current}, next token ${next}. Your booked slot is ${slot}.`;
+}
+function speakFarmerStatus() {
+    if (!("speechSynthesis" in window)) {
+        showSmartAlert("Voice unavailable", "Your browser does not support speech playback.", "warning");
+        return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(buildFarmerScreenSummary());
+    utterance.lang = voiceLocales[currentLanguage] || "en-IN";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+}
+
+/* ================================================================
+   NEW FEATURES (added without touching anything above this point):
+   1. Change Procurement Centre
+   2. Personalized Centre Helpline
+   3. Payment Tracker
+   ================================================================ */
+
+async function loadCentresList() {
+    const selector = document.getElementById("centreSelector");
+    if (!selector) return;
+    try {
+        const res = await fetch(`${API}/centres`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Could not load centres.");
+        const centres = await res.json();
+        selector.innerHTML = "";
+        centres.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            if (Number(c.id) === Number(centreId)) opt.selected = true;
+            selector.appendChild(opt);
+        });
+    } catch (e) {
+        selector.innerHTML = '<option value="">Unable to load centres</option>';
+        console.error("Centre list load failed:", e);
+    }
+}
+
+async function loadCentreDetails() {
+    try {
+        const res = await fetch(`${API}/centres/${centreId}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Centre details unavailable.");
+        const centre = await res.json();
+
+        const nameText = document.getElementById("centreNameText");
+        if (nameText) nameText.textContent = centre.name || "Unknown Centre";
+
+        const cardName = document.getElementById("procurementCentreName");
+        if (cardName) cardName.textContent = centre.name || "Not available";
+
+        const hoursText = document.getElementById("operatingHoursText");
+        if (hoursText && centre.operatingHours) hoursText.textContent = centre.operatingHours;
+
+        const helplineCentreName = document.getElementById("helplineCentreName");
+        if (helplineCentreName) helplineCentreName.textContent = centre.name || "";
+
+        const numberEl = document.getElementById("helplineNumberText");
+        const hoursEl = document.getElementById("helplineHoursText");
+        const callBtn = document.getElementById("helplineCallBtn");
+
+        // Tries common field names in case the backend adds this later.
+        // Shows nothing fake if the centre has no helpline configured yet.
+        const phone = centre.helplineNumber || centre.phone || centre.contactNumber || null;
+
+        if (numberEl) numberEl.textContent = phone || "Helpline not configured";
+        if (hoursEl) hoursEl.textContent = centre.operatingHours ? `Available ${centre.operatingHours}` : "";
+
+        if (callBtn) {
+            if (phone) {
+                callBtn.href = `tel:${phone}`;
+                callBtn.style.pointerEvents = "auto";
+                callBtn.style.opacity = "1";
+            } else {
+                callBtn.removeAttribute("href");
+                callBtn.style.pointerEvents = "none";
+                callBtn.style.opacity = "0.5";
+            }
+        }
+    } catch (e) {
+        console.error("Centre details load failed:", e);
+        const numberEl = document.getElementById("helplineNumberText");
+        if (numberEl) numberEl.textContent = "Unable to load helpline";
+    }
+}
+
+async function switchCentre(newId) {
+    if (!newId || Number(newId) === Number(centreId)) return;
+
+    centreId = Number(newId);
+    localStorage.setItem("spt_centre_id", String(centreId));
+
+    // Re-subscribe live updates so they point at the newly selected centre.
+    if (typeof subscribedDates !== "undefined") subscribedDates.clear();
+    if (typeof subscribeForSelectedDate === "function") subscribeForSelectedDate();
+
+    await loadCentreDetails();
+    await loadProcurementHistory();
+    await loadSlots();
+    await loadSeasonPriceDashboard();
+    await refreshDashboard();
+    loadPaymentTracker();
+}
+
+function loadPaymentTracker() {
+    const statusEl = document.getElementById("paymentStatusText");
+    const amountEl = document.getElementById("paymentAmountText");
+    const expectedEl = document.getElementById("paymentExpectedText");
+    if (!statusEl || !amountEl || !expectedEl) return;
+
+    const pending = "Pending centre confirmation";
+
+    // Never invents a number/date - only shows what the backend actually sends.
+    if (!myBooking) {
+        statusEl.textContent = pending;
+        amountEl.textContent = pending;
+        expectedEl.textContent = pending;
+        return;
+    }
+
+    statusEl.textContent = myBooking.paymentStatus || pending;
+    amountEl.textContent = (myBooking.procurementAmount !== undefined && myBooking.procurementAmount !== null)
+        ? `₹ ${Number(myBooking.procurementAmount).toLocaleString("en-IN")}`
+        : pending;
+    expectedEl.textContent = myBooking.expectedPaymentDate || pending;
+}
+
+// ---------- INITIAL PAGE STATE ----------
+if (slotDateInput) {
+    const today = todayString();
+    slotDateInput.min = today;
+
+    // Reopen the farmer's most recent booking first. This prevents the dashboard
+    // from silently switching back to today after a refresh.
+    const savedBookingDate = savedIdentity.bookingDate;
+    if (savedBookingDate && /^\d{4}-\d{2}-\d{2}$/.test(savedBookingDate)) {
+        slotDateInput.value = savedBookingDate;
+    } else if (!slotDateInput.value) {
+        slotDateInput.value = today;
+    }
+
+    selectedDate = slotDateInput.value;
+
+    slotDateInput.addEventListener("change", async () => {
+        selectedDate = slotDateInput.value;
+        selectedSlotHour = null;
+        closeBookingForm();
+
+        // loadSlots() now also refreshes the Smart Booking Advisor.
+        await loadSlots();
+        await refreshDashboard();
+        await loadProcurementHistory();
+        subscribeForSelectedDate();
+    });
+}
+
+updateFarmerProfile();
+restoreDepartureInputs();
+renderNotificationPermission();
+
+// IMPORTANT: initialize these only after selectedDate and farmer identity
+// have been established. Previously these calls lived inside saveIdentity(),
+// so a page refresh could leave History empty and Smart Booking Advisor stuck
+// on "Loading...".
+loadProcurementHistory();
+loadSlots();
+loadSeasonPriceDashboard();
+changeLanguage(currentLanguage);
+
+// New feature initialization (additive - does not affect anything above)
+loadCentresList();
+loadCentreDetails();
+loadPaymentTracker();
+setInterval(loadPaymentTracker, 5000);
+
+nameInput?.addEventListener("input", e => {
+    farmerName = e.target.value.trim();
 });
 
-function speakFarmerStatus() {
+mobileInput?.addEventListener("input", e => {
+    farmerMobile = e.target.value.replace(/\D/g, "").slice(0, 10);
+    e.target.value = farmerMobile;
+});
 
-    let text =
-        "Your token number is " + farmerToken +
-        ". There are " +
-        document.getElementById("ahead").textContent +
-        " farmers ahead of you. " +
-        "Your estimated waiting time is " +
-        document.getElementById("wait").textContent + ".";
-
-    let speech = new SpeechSynthesisUtterance(text);
-
-    speech.lang = "en-IN";
-
-    window.speechSynthesis.speak(speech);
+const list = document.getElementById("slotList");
+if (list && !selectedDate) {
+    list.innerHTML = '<div class="slot-loading">Please select a visit date to see available slots.</div>';
 }
+
+// ---------- LIVE WEBSOCKET ----------
+const socket = new SockJS("http://localhost:8080/ws");
+const stompClient = Stomp.over(socket);
+let subscribedDates = new Set();
+
+function subscribeForSelectedDate() {
+    if (!selectedDate || !stompClient.connected) return;
+    if (subscribedDates.has(selectedDate)) return;
+
+    subscribedDates.add(selectedDate);
+
+    for (let hour = 8; hour < 17; hour++) {
+        stompClient.subscribe(`/topic/slot/${centreId}/${selectedDate}/${hour}`, () => {
+            // Every booking/operator action refreshes the exact selected date.
+            refreshDashboard();
+            loadSlots();
+        });
+    }
+}
+
+stompClient.connect({}, async () => {
+    subscribeForSelectedDate();
+    await loadSlots();
+    await refreshDashboard();
+});
+
+/* ---------- Kisan Sahayak Assistant ---------- */
+
+function toggleAssistant() {
+    const windowEl = document.getElementById("assistantWindow");
+    const input = document.getElementById("assistantInput");
+    if (!windowEl) return;
+
+    windowEl.classList.toggle("open");
+
+    if (windowEl.classList.contains("open")) {
+        setTimeout(() => input?.focus(), 50);
+    }
+}
+
+function addAssistantMessage(text, type = "bot") {
+    const container = document.getElementById("assistantMessages");
+    if (!container) return;
+
+    const msg = document.createElement("div");
+    msg.className = `assistant-msg ${type}`;
+
+    const textNode = document.createElement("span");
+    textNode.innerHTML = String(text).replace(/\n/g, "<br>");
+    msg.appendChild(textNode);
+
+    if (type === "bot") {
+        const speakBtn = document.createElement("button");
+        speakBtn.type = "button";
+        speakBtn.className = "assistant-speak";
+        speakBtn.textContent = "🔊";
+        speakBtn.title = "Listen";
+        speakBtn.onclick = () => speakAssistantText(String(text));
+        msg.appendChild(speakBtn);
+    }
+
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+function setAssistantTyping(show) {
+    const typing = document.getElementById("assistantTyping");
+    if (typing) typing.classList.toggle("show", show);
+}
+
+function formatSlot(hour) {
+    const h = Number(hour);
+    if (!Number.isFinite(h)) return "selected slot";
+    return `${String(h).padStart(2, "0")}:00–${String(h + 1).padStart(2, "0")}:00`;
+}
+
+async function getAssistantSlots() {
+    if (!selectedDate) return [];
+    const response = await fetch(
+        `${API}/centres/${centreId}/slots?date=${encodeURIComponent(selectedDate)}`
+    );
+    if (!response.ok) throw new Error("Slots are currently unavailable.");
+    return response.json();
+}
+
+async function getAssistantBooking() {
+    await loadMyBooking();
+    return myBooking;
+}
+
+async function getAssistantQueue() {
+    await loadMyBooking();
+    if (!myBooking) return null;
+
+    const response = await fetch(
+        `${API}/centres/${centreId}/slots/${myBooking.slotHour}/queue?date=${encodeURIComponent(selectedDate)}`
+    );
+    if (!response.ok) throw new Error("Live queue is currently unavailable.");
+    return response.json();
+}
+
+function slotSummary(slots) {
+    if (!slots.length) return "No slots are available for this date.";
+
+    const available = slots.filter(s => s.available);
+    if (!available.length) {
+        return `All ${slots.length} slots are currently full for ${selectedDate}.`;
+    }
+
+    return available.map(s =>
+        `${s.label}: ${s.remaining}/${s.capacity} seats left`
+    ).join("\n");
+}
+
+async function answerAssistant(question) {
+    const q = question.toLowerCase().trim();
+
+    if (!q) return "Please type a question.";
+
+    // Greeting/help
+    if (/^(hi|hello|hey|namaste|hii|help|what can you do)/i.test(q)) {
+        return "Namaste! 👋\nI can help with:\n• Your token and queue position\n• Booking details\n• Available slots\n• Estimated waiting time\n• Centre timings\n\nTry asking: “Mera token kya hai?”";
+    }
+
+    // Token / booking status
+    if (q.includes("token") || q.includes("number") || q.includes("booking status")) {
+        const booking = await getAssistantBooking();
+
+        if (!booking) {
+            return `I couldn't find an active booking for ${selectedDate}.\nYou can choose an available slot from the booking section below.`;
+        }
+
+        return `🎟️ Your token is #${booking.tokenNumber}.\n📅 Date: ${booking.bookingDate}\n🕐 Slot: ${formatSlot(booking.slotHour)}\n📌 Status: ${booking.status}`;
+    }
+
+    // Queue / wait / farmers ahead
+    if (
+        q.includes("queue") ||
+        q.includes("ahead") ||
+        q.includes("wait") ||
+        q.includes("kab aayega") ||
+        q.includes("when")
+    ) {
+        const queue = await getAssistantQueue();
+
+        if (!queue) {
+            return `You don't have a booking for ${selectedDate} yet.`;
+        }
+
+        const bookings = queue.bookings || [];
+        const ahead = bookings.filter(b =>
+            b.status === "WAITING" &&
+            Number(b.tokenNumber) < Number(myBooking.tokenNumber)
+        ).length;
+
+        const wait = Number(queue.estimatedWaitMinutes);
+        const current = queue.currentlyProcessingToken ?? "-";
+        const next = queue.nextToken ?? "-";
+
+        if (myBooking.status === "COMPLETED") {
+            return "✅ Your procurement is already completed. No waiting time remains.";
+        }
+
+        if (myBooking.status === "PROCESSING") {
+            return "🟢 Your token is being processed right now. Please stay at the centre.";
+        }
+
+        if (myBooking.status === "NO_SHOW") {
+            return "⚠️ Your booking was marked as no-show. Please contact the centre/operator.";
+        }
+
+        return `📊 Live queue status:\n🎟️ Your token: #${myBooking.tokenNumber}\n👨‍🌾 Farmers ahead: ${ahead}\n🔄 Currently processing: ${current}\n➡️ Next token: ${next}\n⏱️ Estimated wait: ${Number.isFinite(wait) ? Math.max(0, Math.round(wait)) : ahead * 6} min`;
+    }
+
+    // Current procurement / price / MSP
+    if (
+        q.includes("msp") || q.includes("price") || q.includes("rate") ||
+        q.includes("procurement") || q.includes("what is being bought") ||
+        q.includes("kya kharid") || q.includes("kya procurement") || q.includes("daam") || q.includes("bhav")
+    ) {
+        await loadSeasonPriceDashboard();
+        const commodity = document.getElementById("currentCommodityDashboard")?.textContent || "not configured";
+        const price = document.getElementById("currentMspDashboard")?.textContent || "not available";
+        return `🌾 Current season: ${detectCurrentSeason().name}\n🛒 Procurement: ${commodity}\n💰 Farmer price / MSP: ${price} per quintal`;
+    }
+
+    // Slots
+    if (
+        q.includes("slot") ||
+        q.includes("available") ||
+        q.includes("time") ||
+        q.includes("booking") && (q.includes("kab") || q.includes("when"))
+    ) {
+        const slots = await getAssistantSlots();
+        return `🕐 Slots for ${selectedDate}:\n${slotSummary(slots)}`;
+    }
+
+    // Centre timings
+    if (
+        q.includes("open") ||
+        q.includes("close") ||
+        q.includes("timing") ||
+        q.includes("centre kab")
+    ) {
+        return "🏢 Haridwar Procurement Centre\n🕐 Operating hours: 08:00 AM – 05:00 PM";
+    }
+
+    // What to bring / documents — intentionally framed as demo guidance.
+    if (
+        q.includes("document") ||
+        q.includes("kya lana") ||
+        q.includes("lekar") ||
+        q.includes("bring")
+    ) {
+        return "📋 Please carry your required farmer/procurement documents and booking/token details.\n\nFor the SIH prototype, the exact document checklist can be configured by the procurement authority.";
+    }
+
+    return "I can currently help with your token, live queue, estimated wait, booking details, available slots, and centre timings.\n\nTry: “Mera token kya hai?” or “Mere se kitne farmer aage hain?”";
+}
+
+async function askAssistant(question) {
+    addAssistantMessage(question, "user");
+    setAssistantTyping(true);
+
+    try {
+        const answer = await answerAssistant(question);
+        addAssistantMessage(answer, "bot");
+    } catch (error) {
+        console.error("Assistant error:", error);
+        addAssistantMessage("Sorry, I couldn't fetch the latest procurement information right now. Please try again.", "bot");
+    } finally {
+        setAssistantTyping(false);
+    }
+}
+
+
+/* ---------- Browser Voice Support ---------- */
+
+const SpeechRecognitionAPI =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let assistantRecognition = null;
+let assistantListening = false;
+
+function detectAssistantLanguage(text) {
+    // Devanagari characters => Hindi.
+    if (/[\u0900-\u097F]/.test(text)) return "hi-IN";
+
+    // Common Hinglish phrases should also be spoken naturally in Hindi.
+    const hindiWords = [
+        "mera", "meri", "mere", "mujhe", "kitne", "kab", "kya",
+        "aaj", "kal", "hai", "hain", "batao", "slot", "farmer",
+        "se", "aage", "number", "ghar", "jana"
+    ];
+
+    const lower = text.toLowerCase();
+    const hits = hindiWords.filter(word =>
+        new RegExp(`\\b${word}\\b`, "i").test(lower)
+    ).length;
+
+    return hits >= 2 ? "hi-IN" : "en-IN";
+}
+
+function speakAssistantText(text) {
+    if (!("speechSynthesis" in window)) {
+        addAssistantMessage("Voice playback is not supported in this browser.", "bot");
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(
+        text.replace(/🎟️|📅|🕐|📌|📊|👨‍🌾|🔄|➡️|⏱️|🟢|✅|⚠️|🏢|📋|👋|🤖/g, "")
+    );
+
+    utterance.lang = detectAssistantLanguage(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+
+    window.speechSynthesis.speak(utterance);
+}
+
+function toggleAssistantVoice() {
+    if (!SpeechRecognitionAPI) {
+        addAssistantMessage(
+            "🎙️ Voice input is not supported in this browser. Please use the text box.",
+            "bot"
+        );
+        return;
+    }
+
+    if (assistantListening) {
+        assistantRecognition?.stop();
+        return;
+    }
+
+    assistantRecognition = new SpeechRecognitionAPI();
+    assistantRecognition.continuous = false;
+    assistantRecognition.interimResults = false;
+    assistantRecognition.lang = voiceLocales[currentLanguage] || "hi-IN";
+
+    const mic = document.getElementById("assistantMic");
+    const hint = document.getElementById("assistantVoiceHint");
+
+    assistantRecognition.onstart = () => {
+        assistantListening = true;
+        if (mic) {
+            mic.classList.add("listening");
+            mic.textContent = "⏹️";
+        }
+        if (hint) hint.textContent = "🎙️ Listening… speak your question";
+    };
+
+    assistantRecognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("assistantInput");
+
+        if (input) input.value = transcript;
+
+        // Automatically send after successful voice capture.
+        sendAssistantMessage();
+    };
+
+    assistantRecognition.onerror = event => {
+        console.warn("Voice recognition error:", event.error);
+        if (hint) {
+            hint.textContent =
+                event.error === "not-allowed"
+                    ? "🎙️ Microphone permission is blocked."
+                    : "🎙️ Could not hear that. Try again.";
+        }
+    };
+
+    assistantRecognition.onend = () => {
+        assistantListening = false;
+        if (mic) {
+            mic.classList.remove("listening");
+            mic.textContent = "🎙️";
+        }
+        if (hint) hint.textContent = `🎙️ Voice: ${languageNames[currentLanguage]}`;
+    };
+
+    try {
+        assistantRecognition.start();
+    } catch (error) {
+        console.error("Could not start voice recognition:", error);
+    }
+}
+
+function sendAssistantMessage() {
+    const input = document.getElementById("assistantInput");
+    if (!input) return;
+
+    const question = input.value.trim();
+    if (!question) return;
+
+    input.value = "";
+    askAssistant(question);
+}
+
+updateVoiceHint();
 
 </script>
 
